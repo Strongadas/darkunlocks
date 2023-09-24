@@ -27,8 +27,8 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 
-mongoose.connect(process.env.DATABASE_URL)
-mongoose.set('strictQuery', false);
+mongoose.connect("mongodb+srv://Anacleto:Strongadas@cluster0.odsr23g.mongodb.net/DarkUnlocksDB")
+mongoose.set('strictQuery', true);
 
 const userSchema = new mongoose.Schema({
     
