@@ -31,7 +31,7 @@ store.on('error', (error) => {
     console.error('MongoDBStore Error:', error);
   })
 
-  
+
 app.use(express.static('public'))
 app.set('view engine','ejs')
 app.set('views', __dirname + '/views')
@@ -426,8 +426,8 @@ app.post('/login',(req,res)=>{
 })
 
 
-const port = process.env.PORT || 3000
-app.listen(port,(err)=>{
+const PORT = process.env.PORT || 3000
+app.listen(PORT,(err)=>{
     if(err){
         console.log(err + "while sarting the server")
     }
