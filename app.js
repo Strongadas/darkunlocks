@@ -13,7 +13,7 @@ const nodemailer = require('nodemailer');
 
 
 const app = express()
-//const secret = process.env.SECRET
+
 
 app.use(express.static('public'))
 app.set('view engine','ejs')
@@ -21,14 +21,15 @@ app.set('views', __dirname + '/views')
 app.use(bodyParser.urlencoded({extended:true}))
 
 app.use(session({
-    secret:"Luziaisalino",
+    secret:process.env.SECRET,
     resave:false,
     saveUninitialized:false
 }))
 app.use(passport.initialize())
 app.use(passport.session())
 
-mongoose.connect('mongodb://localhost:27017/DarkUnlocksDB')
+
+mongoose.connect("mongodb+srv://Anacleto:Strongadas@cluster0.odsr23g.mongodb.net/DarkUnlocksDB")
 mongoose.set('strictQuery', false);
 
 const userSchema = new mongoose.Schema({
@@ -37,8 +38,8 @@ const userSchema = new mongoose.Schema({
     password: String,
     name:String,
     balance: {type:Number,default:0},
-    paidCredits: Number,
-    unpaidCredits: Number,
+    paidCredits: {type:Number,default:0},
+    unpaidCredits: {type:Number,default:0},
     isAdmin: { type: Boolean, default: false }
 });
 userSchema.plugin(passportLocalMongoose)
@@ -63,15 +64,26 @@ passport.serializeUser(function(user, done) {
 
 // Admin dashboard route
 app.get('/admin', isAdmin, (req, res) => {
-    // Render the admin dashboard template
-    res.render('admin', {
-        user: req.user, // Assuming user information is stored in the session
-        balance: 1000, // Example balance data
-        totalCredits: 500,
-        paidCredits: 300,
-        unpaidCredits: 200,
+    // Assuming you have a user model
+    User.findOne({ _id: req.user._id }, (err, user) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Internal Server Error');
+        }
+
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        // Fetch the balance data
+        const { balance = 0, paidCredits = 0, unpaidCredits = 0 } = user;
+
+        // Render the 'admin' view and pass the user and balance data
+        res.render('admin', { user, balance, paidCredits, unpaidCredits });
     });
 });
+
+
 app.get('/users', isAdmin, async (req, res) => {
     try {
         // Fetch all users from your database
@@ -396,6 +408,8 @@ app.post('/login',(req,res)=>{
     })
 })
 
-app.listen(4000,()=>{
-    console.log('Server started on port 4000')
+
+const PORT = process.env.PORT || 3000
+app.listen(PORT,()=>{
+    console.log('Server started on port 3000')
 })
