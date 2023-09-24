@@ -19,7 +19,7 @@ app.set('views', __dirname + '/views')
 app.use(bodyParser.urlencoded({extended:true}))
 
 app.use(session({
-    secret:"LuziaIsalino",
+    secret:process.env.SECRET,
     resave:false,
     saveUninitialized:false
 }))
@@ -27,7 +27,7 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 
-mongoose.connect("mongodb+srv://Anacleto:Strongadas@cluster0.odsr23g.mongodb.net/DarkUnlocksDB")
+mongoose.connect(process.env.DATABASE_URL)
 mongoose.set('strictQuery', false);
 
 const userSchema = new mongoose.Schema({
