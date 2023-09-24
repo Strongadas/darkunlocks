@@ -1,0 +1,67 @@
+<%- include("partials/header-user"); -%>
+
+<div class="container" id="dash">
+    <div class="row mt-5">
+        <!-- User Information -->
+         <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    User Information
+                </div>
+                <div class="card-body">
+                    <p><strong>Name:</strong> <%= user.name %></p>
+                     <p><strong>Email:</strong> <%= user.username %></p>
+                     <p><strong>Admin:</strong> <%= user.isAdmin %></p>
+        <!-- You can add more user information as needed -->
+                    <p><strong>API enabled:</strong> No</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Balance -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    Balance
+                </div>
+                <div class="card-body">
+                    <!-- Add balance information here -->
+                    <p><strong>Balance:</strong> $<%= balance %></p>
+                    <p><strong>Paid Credits:</strong> $<%= paidCredits %></p>
+                    <p><strong>Unpaid Credits:</strong> $<%= unpaidCredits %></p>
+                    <!-- You can add more balance-related information as needed -->
+                </div>
+            </div>
+        </div>
+
+       
+
+        <!-- Content -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    IMEI Orders
+                </div>
+                <div class="card-body">
+                    <!-- Add your dashboard content here -->
+                    <p><strong>Waiting action:</strong>0</p>
+                    <p><strong>In process:</strong>0</p>
+                    <p><strong>sucess:</strong>0</p>
+                    <p><strong>Rejected:</strong>0</p>
+                    <p><strong>Cancelled:</strong>0</p>
+                    <p><strong>All:</strong>0</p>
+                    <!-- You can add more content, charts, or widgets here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<br><br><br><br>
+
+
+
+<%- include("partials/footer"); -%>

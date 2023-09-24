@@ -1,0 +1,35 @@
+<!-- user-edit.ejs -->
+
+<%- include("partials/header-admin"); -%>
+
+<div class="container mt-5">
+    <h1>Edit User</h1>
+    <form action="/users/<%= user._id %>/edit" method="POST">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="<%= user.name %>" class="form-control">
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="username" value="<%= user.username %>" class="form-control">
+        </div>
+        <div class="form-group">
+            <label for="isAdmin">Admin:</label>
+            <select class="form-control" id="isAdmin" name="isAdmin">
+                <option value="true" <% if (user.isAdmin) { %>selected<% } %>>Yes</option>
+                <option value="false" <% if (!user.isAdmin) { %>selected<% } %>>No</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="balance">Balance:</label>
+            <input type="number" id="balance" name="balance" value="<%= user.balance %>" class="form-control">
+        </div>
+
+        <br>
+        <!-- Add more form fields for other user information as needed -->
+        <button type="submit" class="btn btn-success">Update</button>
+    </form>
+</div>
+
+<br><br><br>
+<%- include("partials/footer"); -%>

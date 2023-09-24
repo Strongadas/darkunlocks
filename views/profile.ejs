@@ -1,0 +1,27 @@
+<%- include("partials/header-user"); -%>
+<div class="container mt-5">
+<h1>Edit User Information</h1>
+<form action="/profile" method="POST">
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" value="<%= user.name %>" class="form-control">
+    </div>
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="username" value="<%= user.username %>" class="form-control">
+    </div>
+  
+    <br>
+    <!-- Add more form fields for other user information as needed -->
+    <button type="submit" class="btn btn-success">Update</button>
+    
+</form>
+</div>
+<br><br><br><br><br><br><br><br>
+
+
+
+
+
+
+<%- include("partials/footer"); -%>
