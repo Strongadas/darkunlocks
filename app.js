@@ -15,21 +15,9 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const app = express()
 
 
-mongoose.connect(process.env.DATABASE_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+mongoose.connect(process.env.DATABASE_URL)
 mongoose.set('strictQuery', false);
 
-// Initialize MongoDBStore with your MongoDB connection
-const store = new MongoDBStore({
-    uri: process.env.DATABASE_URL,
-    collection: 'sessions', // Collection to store sessions
-  });
-  // Catch errors for MongoDBStore
-store.on('error', (error) => {
-    console.error('MongoDBStore Error:', error);
-  })
 
 
 app.use(express.static('public'))
@@ -40,8 +28,7 @@ app.use(bodyParser.urlencoded({extended:true}))
 app.use(session({
     secret:process.env.SECRET,
     resave:false,
-    saveUninitialized:false,
-    store: store
+    saveUninitialized:false
 }))
 app.use(passport.initialize())
 app.use(passport.session())
