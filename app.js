@@ -10,8 +10,6 @@ const passport = require('passport')
 const nodemailer = require('nodemailer');
 
 
-
-
 const app = express()
 
 
@@ -409,7 +407,10 @@ app.post('/login',(req,res)=>{
 })
 
 
-const PORT = process.env.PORT || 3000
-app.listen(PORT,()=>{
+const port = process.env.PORT || 3000
+app.listen(port,(err)=>{
+    if(err){
+        console.log(err + "while sarting the server")
+    }
     console.log('Server started on port 3000')
 })
