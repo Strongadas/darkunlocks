@@ -1,5 +1,5 @@
 //jshint esversion:6
-require('dotenv').config()
+require('dotenv').config();
 const express = require('express')
 const bodyParser = require('body-parser')
 const ejs = require ('ejs')
@@ -29,7 +29,7 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 
-mongoose.connect("mongodb+srv://Anacleto:Strongadas@cluster0.odsr23g.mongodb.net/DarkUnlocksDB")
+mongoose.connect(process.env.DATABASE_URL)
 mongoose.set('strictQuery', false);
 
 const userSchema = new mongoose.Schema({
