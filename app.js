@@ -19,7 +19,6 @@ mongoose.connect(process.env.DATABASE_URL)
 mongoose.set('strictQuery', false);
 
 
-
 app.use(express.static('public'))
 app.set('view engine','ejs')
 app.set('views', __dirname + '/views')
@@ -199,11 +198,6 @@ app.get('/users/:userId/user-delete', isAdmin, async (req, res) => {
 
 
 
-
-
-
-
-
 //gets method
 app.get('/',(req,res)=>{
     res.render('home')
@@ -289,15 +283,7 @@ app.get('/credits',(req,res)=>{
 })
 
 
-
-
-
 //Post methoods
-
-
-
-
-
 app.post('/profile', (req, res) => {
     if (req.isAuthenticated()) {
       const { name, username } = req.body;
