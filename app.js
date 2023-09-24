@@ -8,11 +8,30 @@ const session = require('express-session')
 const passportLocalMongoose = require('passport-local-mongoose')
 const passport = require('passport')
 const nodemailer = require('nodemailer');
+const Redis = require('ioredis');
+const MongoDBStore = require('connect-mongodb-session')(session);
 
 
 const app = express()
 
 
+mongoose.connect(process.env.DATABASE_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+mongoose.set('strictQuery', false);
+
+// Initialize MongoDBStore with your MongoDB connection
+const store = new MongoDBStore({
+    uri: process.env.DATABASE_URL,
+    collection: 'sessions', // Collection to store sessions
+  });
+  // Catch errors for MongoDBStore
+store.on('error', (error) => {
+    console.error('MongoDBStore Error:', error);
+  })
+
+  
 app.use(express.static('public'))
 app.set('view engine','ejs')
 app.set('views', __dirname + '/views')
@@ -21,14 +40,13 @@ app.use(bodyParser.urlencoded({extended:true}))
 app.use(session({
     secret:process.env.SECRET,
     resave:false,
-    saveUninitialized:false
+    saveUninitialized:false,
+    store: store
 }))
 app.use(passport.initialize())
 app.use(passport.session())
 
 
-mongoose.connect(process.env.DATABASE_URL)
-mongoose.set('strictQuery', false);
 
 const userSchema = new mongoose.Schema({
     
@@ -52,6 +70,7 @@ passport.serializeUser(function(user, done) {
   passport.deserializeUser(function(user, done) {
     done(null, user);
   });
+
 
   const isAdmin = (req, res, next) => {
     if (req.isAuthenticated() && req.user.isAdmin) {
