@@ -24,15 +24,19 @@
 
         <div class="form-group">
             <label for="balance">Balance:</label>
-            <input type="number" id="balance" name="balance" value="<%= user.balance %>" class="form-control">
+            <input type="number" id="balance" name="balance" value="<%= user.balance %>" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+            <label for="balance">New Balance:</label>
+            <input type="number" id="newBalance" name="newBalance" value="" class="form-control" placeholder="Add more credits ">
         </div>
         <div class="form-group">
             <label for="balance">Paid Credits:</label>
-            <input type="number" id="paidcredits" name="paidcredits" value="<%= user.paidCredits %>" class="form-control">
+            <input type="number" id="paidCredits" name="paidCredits" value="<%= user.paidCredits %>" class="form-control">
         </div>
         <div class="form-group">
             <label for="balance">Unpaid Credits:</label>
-            <input type="number" id="unpaidcredits" name="unpaidcredits" value="<%= user.unpaidCredits %>" class="form-control">
+            <input type="number" id="unpaidCredits" name="unpaidCredits" value="<%= user.unpaidCredits %>" class="form-control">
         </div>
         <br>
         <div class="form-group">

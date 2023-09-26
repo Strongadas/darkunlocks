@@ -124,9 +124,9 @@ app.get('/admin', isAdmin, (req, res) => {
              const cancelled = user.cancelled || 0;
              
              const allOrders = waitingAction + inprocess + success + rejected + cancelled
-             
+             const totalBalance = (user.balance || 0) + (user.paidCredits || 0) + (user.unpaidCredits || 0);
              // Render the 'dash' view and pass the user and balance data
-             res.render('admin', { user: user, balance: balance, paidCredits: paidCredits, unpaidCredits: unpaidCredits , waitingAction: waitingAction ,inprocess:inprocess ,success:success,rejected:rejected, cancelled:cancelled , allOrders:allOrders});
+             res.render('admin', { user: user, balance: balance, paidCredits: paidCredits, unpaidCredits: unpaidCredits , waitingAction: waitingAction ,inprocess:inprocess ,success:success,rejected:rejected, cancelled:cancelled , allOrders:allOrders,totalBalance});
     });
 });
 
@@ -181,15 +181,35 @@ app.get('/users/:userId/user-edit', isAdmin, async (req, res) => {
 app.post('/users/:userId/edit', isAdmin, async (req, res) => {
     try {
         const userId = req.params.userId;
-        // Parse the form data and update user information in the database
-        const { name, username, isAdmin, balance , paidcredits, unpaidcredits , waitingAction,inprocess, success , rejected, cancelled  } = req.body;
+        // Parse the form data and retrieve the new balance from the request body
+        const { name, username, isAdmin, newBalance, paidCredits, unpaidCredits, waitingAction, inprocess, success, rejected, cancelled } = req.body;
 
-        
+        // Fetch the user's existing data, including the old balance
+        const existingUser = await User.findById(userId);
 
-        // Update the user information in your database (e.g., using Mongoose)
+        if (!existingUser) {
+            return res.status(404).send('User not found');
+        }
+
+        // Calculate the new balance by adding the new balance to the old balance
+        const updatedBalance = existingUser.balance + parseFloat(newBalance);
+
+        // Update the user information in your database, including the new balance
         const updatedUser = await User.findByIdAndUpdate(
             userId,
-            { name, username, isAdmin , balance, paidcredits, unpaidcredits , waitingAction,inprocess, success , rejected, cancelled },
+            {
+                name,
+                username,
+                isAdmin,
+                balance: updatedBalance, // Update the balance with the new calculated balance
+                paidCredits,
+                unpaidCredits,
+                waitingAction,
+                inprocess,
+                success,
+                rejected,
+                cancelled
+            },
             { new: true }
         );
 
@@ -203,6 +223,7 @@ app.post('/users/:userId/edit', isAdmin, async (req, res) => {
         res.status(500).send('Internal server error');
     }
 });
+
 
 
 
@@ -293,7 +314,7 @@ app.post('/orders', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const selectedDevice = req.body.device;
+        let selectedDevice = req.body.device;
         const orderPrice = parseFloat(req.body.device_price); // Parse the order price from the form data
         const userBalance = user.balance;
         const imei = req.body.imei
@@ -309,7 +330,13 @@ app.post('/orders', async (req, res) => {
         if (selectedDevice <= userBalance) {
             // User has enough balance, process the order here
             // Deduct the order price from the user's balance
-            user.balance -= selectedDevice; // Subtract the order price from the user's balance
+            user.balance -= selectedDevice;// Subtract the order price from the user's balance
+            // Convert user.paidCredits to a number before addition
+             
+             selectedDevice = parseFloat(selectedDevice);
+             
+
+            user.paidCredits += selectedDevice
             await user.save();
 
             user.waitingAction += 1; // Increment the waiting action count
@@ -423,9 +450,10 @@ app.get('/dash', (req, res) => {
              const cancelled = user.cancelled || 0;
              
              const allOrders = waitingAction + inprocess + success + rejected + cancelled
-             
+             const totalBalance = (user.balance || 0) + (user.paidCredits || 0) + (user.unpaidCredits || 0);
+
              // Render the 'dash' view and pass the user and balance data
-             res.render('dash', { user: user, balance: balance, paidCredits: paidCredits, unpaidCredits: unpaidCredits , waitingAction: waitingAction ,inprocess:inprocess ,success:success,rejected:rejected, cancelled:cancelled , allOrders:allOrders});
+             res.render('dash', { user: user, balance: balance, paidCredits: paidCredits, unpaidCredits: unpaidCredits , waitingAction: waitingAction ,inprocess:inprocess ,success:success,rejected:rejected, cancelled:cancelled , allOrders:allOrders , totalBalance});
          
         });
     } else {
