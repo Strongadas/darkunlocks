@@ -10,7 +10,7 @@ const passport = require('passport')
 const nodemailer = require('nodemailer');
 const Redis = require('ioredis');
 const MongoDBStore = require('connect-mongodb-session')(session);
-
+const schedule = require('node-schedule');
 
 const app = express()
 
@@ -38,23 +38,41 @@ const userSchema = new mongoose.Schema({
     username:String,
     password: String,
     name:String,
-    balance: {type:Number,default:0},
+    balance: {
+        type: Number,
+        default: 0, // You can set a default balance if needed
+    },
     paidCredits: {type:Number,default:0},
     unpaidCredits: {type:Number,default:0},
-    isAdmin: { type: Boolean, default: false }
+    isAdmin: { type: Boolean, default: false },
+    waitingAction: {type:Number,default:0},
+    inprocess:{type:Number,default:0},
+    success:{type:Number,default:0},
+    rejected:{type:Number,default:0},
+    cancelled:{type:Number,default:0},
+    imeiNumbers: [{ type: String }],
+    addedAt: {
+        type: Date,
+        default: Date.now,
+    }
+
+
 });
 userSchema.plugin(passportLocalMongoose)
 
 const User = new mongoose.model('User',userSchema)
 
 passport.use(User.createStrategy())
-passport.serializeUser(function(user, done) {
-    done(null, user);
-  });
-  
-  passport.deserializeUser(function(user, done) {
-    done(null, user);
-  });
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+    User.findById(id, (err, user) => {
+        done(err, user);
+    });
+});
+
 
 
   const isAdmin = (req, res, next) => {
@@ -63,6 +81,24 @@ passport.serializeUser(function(user, done) {
     }
     res.redirect('/dash'); // Redirect to the home page or login page if not an admin
 };
+
+
+//// Schedule a job to run every 10 minutes
+const job = schedule.scheduleJob('*/3 * * * *', async () => {
+    // Implement logic to remove waiting actions and increase inprocess here
+    // For example:
+    
+    const users = await User.find({ waitingAction: { $gt: 0 } });
+
+    for (const user of users) {
+        user.inprocess += user.waitingAction;
+        user.waitingAction = 0;
+        user.addedAt = new Date();
+        await user.save();
+    }
+});
+
+
 
 // Admin dashboard route
 app.get('/admin', isAdmin, (req, res) => {
@@ -76,12 +112,21 @@ app.get('/admin', isAdmin, (req, res) => {
         if (!user) {
             return res.status(404).send('User not found');
         }
-
-        // Fetch the balance data
-        const { balance = 0, paidCredits = 0, unpaidCredits = 0 } = user;
-
-        // Render the 'admin' view and pass the user and balance data
-        res.render('admin', { user, balance, paidCredits, unpaidCredits });
+        // Render the 'dash' template and pass the user data
+             // Fetch the balance data
+             const balance = user.balance || 0; 
+             const paidCredits = user.paidCredits || 0;
+             const unpaidCredits = user.unpaidCredits || 0;
+             const waitingAction = user.waitingAction || 0;
+             const  inprocess = user.inprocess || 0;
+             const success = user.success || 0;
+             const rejected = user.rejected || 0;
+             const cancelled = user.cancelled || 0;
+             
+             const allOrders = waitingAction + inprocess + success + rejected + cancelled
+             
+             // Render the 'dash' view and pass the user and balance data
+             res.render('admin', { user: user, balance: balance, paidCredits: paidCredits, unpaidCredits: unpaidCredits , waitingAction: waitingAction ,inprocess:inprocess ,success:success,rejected:rejected, cancelled:cancelled , allOrders:allOrders});
     });
 });
 
@@ -137,13 +182,14 @@ app.post('/users/:userId/edit', isAdmin, async (req, res) => {
     try {
         const userId = req.params.userId;
         // Parse the form data and update user information in the database
-        const { name, username, isAdmin, balance } = req.body;
+        const { name, username, isAdmin, balance , paidcredits, unpaidcredits , waitingAction,inprocess, success , rejected, cancelled  } = req.body;
 
+        
 
         // Update the user information in your database (e.g., using Mongoose)
         const updatedUser = await User.findByIdAndUpdate(
             userId,
-            { name, username, isAdmin , balance},
+            { name, username, isAdmin , balance, paidcredits, unpaidcredits , waitingAction,inprocess, success , rejected, cancelled },
             { new: true }
         );
 
@@ -157,9 +203,8 @@ app.post('/users/:userId/edit', isAdmin, async (req, res) => {
         res.status(500).send('Internal server error');
     }
 });
-// Import necessary modules and User model
 
-// Define the route for user deletion
+
 
 // Define the route for user deletion
 app.get('/users/:userId/user-delete', isAdmin, async (req, res) => {
@@ -206,11 +251,136 @@ app.get('/services',(req,res)=>{
 })
 app.get('/orders',(req,res)=>{
     if (req.isAuthenticated()) {
-        res.render('orders')
-    }else{
+
+        // Assuming you have a user model
+        User.findOne({ _id: req.user._id }, (err, user) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Internal Server Error');
+            }
+            
+            if (!user) {
+                return res.status(404).send('User not found');
+            }
+
+            // Render the 'dash' template and pass the user data
+             // Fetch the balance data
+             const balance = user.balance || 0; 
+             
+            
+             
+             // Render the 'dash' view and pass the user and balance data
+             res.render('orders', { user: user, balance: balance});
+         
+        });
+    } else {
         res.redirect('/');
     }
+
 })
+
+//POST route for submitting the order
+
+app.post('/orders', async (req, res) => {
+    if (req.isAuthenticated()) {
+        // Assuming you have user authentication and user ID available in req.user
+        const userId = req.user.id;
+        console.log('User ID:', userId);
+        // Retrieve user's balance from the database
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const selectedDevice = req.body.device;
+        const orderPrice = parseFloat(req.body.device_price); // Parse the order price from the form data
+        const userBalance = user.balance;
+        const imei = req.body.imei
+
+        
+        console.log(selectedDevice)
+        console.log(orderPrice)
+        console.log(userBalance)
+        console.log(imei)
+
+        
+
+        if (selectedDevice <= userBalance) {
+            // User has enough balance, process the order here
+            // Deduct the order price from the user's balance
+            user.balance -= selectedDevice; // Subtract the order price from the user's balance
+            await user.save();
+
+            user.waitingAction += 1; // Increment the waiting action count
+            await user.save();
+
+
+            // Send a success response with the updated balance
+            return res.redirect('/order-sucessfully');
+
+        } else {
+            // User doesn't have enough balance
+            return res.render('insufficient-balance'); // Render the GUI page
+
+        }
+    } else {
+        // User is not authenticated, handle accordingly
+        res.redirect('/login');
+    }
+});
+app.get('/order-sucessfully', async (req, res) => {
+    // Retrieve the user's waiting action and inprocess counts
+    if (req.isAuthenticated()) {
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const balance = user.balance;
+        
+
+        // Render the HTML with the counts
+        res.render('order-sucessfully', {balance});
+    } else {
+        // User is not authenticated, handle accordingly
+        res.redirect('/login');
+    }
+})
+app.get('/view-orders', async (req, res) => {
+    // Retrieve the user's waiting action and inprocess counts
+    if (req.isAuthenticated()) {
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const waitingActionCount = user.waitingAction;
+        const inprocessCount = user.inprocess;
+        const successCount = user.success
+        const date = user.addedAt
+
+        // Render the HTML with the counts
+        res.render('view-orders', { waitingActionCount, inprocessCount , successCount ,date});
+    } else {
+        // User is not authenticated, handle accordingly
+        res.redirect('/login');
+    }
+});
+
+    
+
+
+
+
+
+
+
+
 app.get('/profile', (req, res) => {
     if (req.isAuthenticated()) {
       // Fetch the current user's information (e.g., from req.user)
@@ -246,11 +416,16 @@ app.get('/dash', (req, res) => {
              const balance = user.balance || 0; 
              const paidCredits = user.paidCredits || 0;
              const unpaidCredits = user.unpaidCredits || 0;
+             const waitingAction = user.waitingAction || 0;
+             const  inprocess = user.inprocess || 0;
+             const success = user.success || 0;
+             const rejected = user.rejected || 0;
+             const cancelled = user.cancelled || 0;
              
-           
+             const allOrders = waitingAction + inprocess + success + rejected + cancelled
              
              // Render the 'dash' view and pass the user and balance data
-             res.render('dash', { user: user, balance: balance, paidCredits: paidCredits, unpaidCredits: unpaidCredits });
+             res.render('dash', { user: user, balance: balance, paidCredits: paidCredits, unpaidCredits: unpaidCredits , waitingAction: waitingAction ,inprocess:inprocess ,success:success,rejected:rejected, cancelled:cancelled , allOrders:allOrders});
          
         });
     } else {
@@ -321,7 +496,9 @@ app.post('/profile', (req, res) => {
   
   
 
-  
+
+
+//
 
 
 

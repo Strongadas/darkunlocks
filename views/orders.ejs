@@ -1,337 +1,103 @@
 <%- include("partials/header-user"); -%>
 
 <div class="container mt-5">
-    <h1>Order imei</h1>
-    <div class="form-group">
-        <label for="serviceSelect">Choose a Service:</label>
-        <select class="form-control" id="serviceSelect">
-            <option value="service0">Select a Service to start</option>
-            <option value="SMD HELLO WITH SIGNAL Order">SMD Ramdisk Hello bypass with Signal</option>
-            <option value="Lpro passcode or Hello no signal Order">Passcode/ hello no Signal bypass</option>
-            <option value="Plist Service Order">Lost/ Clean mode Plist Service</option>
-            <option value="IRemoval Pro Hello with Signal ">IRemoval Pro Hello with Signal (windows)</option>
-            <option value="smd activator">SMD ACTIVATOR</option>
-        </select>
-    </div>
-</div>
+    <label for="balance">Your Balance: $<%= balance %></label> <br>
+    <h2>Place a New IMEI Order</h2>
+    <form action="/orders" method="post">
 
-<div class="container mt-4" id="dynamicDiv" style="display: none;">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Order</th>
-                <th>Delivery Time</th>
-                <th>Price</th>
-            </tr>
-        </thead>
-        <tbody id="dynamicTableBody">
-            <!-- Service details will be inserted here -->
-        </tbody>
-    </table>
-</div>
+        <div class="form-group" >
+            <label for="device">Select Device:</label>
+            <select class="form-control" id="device" name="device">
+                <option value="">Select a Device</option>
+                <option value="200" data-price="1499">#1001 MacBook Pro (13-inch, 2019, Two Thunderbolt 3 ports) - $200</option>
+                <option value="230" data-price="2399">#1002 MacBook Pro (16-inch, 2019) - $230</option>
+                <option value="260" data-price="1199">$1003 iMac (24-inch, M1, 2021) iMac21,1/iMac21,2 (two/four ports) - $260</option>
+                <option value="288" data-price="1699">#1004 MacBook Pro (13-inch, M2, 2022) Mac14,7 - $288</option>
+                <option value="300" data-price="999">#1005 MacBook Air (M1, 2020) MacBookAir10,1 - $300</option>
+                <option value="350" data-price="1199">#1006 MacBook Air (M2, 2022) Mac14,2 - $350</option>
+                
+                <option value="10.00" data-price="10.00">IPhone 6s/6s+ SMD Ramdisk Hello bypass with Signal - $10</option>
+                <option value="15" data-price="15">IPhone 7/7+ SMD Ramdisk Hello bypass with Signal - $15 </option>
+                <option value="25" data-price="25">IPhone 8/8+ SMD Ramdisk Hello bypass with Signal - $25</option>
+                <option value="32" data-price="32">IPhone X SMD Ramdisk Hello bypass with Signal - $32</option>
 
-<!-- Modal -->
-<div class="modal fade" id="serviceModal" tabindex="-1" role="dialog" aria-labelledby="serviceModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        
-        <form class="modal-content" >
-            <div class="modal-header">
-                <h5 class="modal-title" id="serviceModalLabel">Service Details</h5>
-                <button type="reset" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="errorModalBody" style="display: none;">
-                <!-- Error message will be displayed here -->
-                <p style="color: red;">Youd don't have enough credits! Please <a href="/credits">top up credits</a></p>
-            </div>
-            <div class="modal-body" id="errorEmpty" style="display: none;">
-                <!-- Error message will be displayed here -->
-                <p style="color: red;">Plz enter an imei or sn </a></p>
-            </div>
+                <option value="12" data-price="12">IPhone 6s/6s+ IRemoval Pro Hello with Signal (windows) - $12</option>
+                <option value="18" data-price="18"> IPhone 7/7+ IRemoval Pro Hello with Signal (windows) - $18</option>
+                <option value="28" data-price="28"> IPhone 8/8+ IRemoval Pro Hello with Signal (windows) - $28</option>
+                <option value="35" data-price="35"> IPhone X IRemoval Pro Hello with Signal (windows) - $35</option>
 
-            <div class="modal-body" id="serviceModalBody">
-                <!-- Service details and input field will be displayed here -->
-            </div>
+                <option value="3" data-price="3">A9 LPro Passcode or Hello no signal bypass - $3</option>
+                 <option value="4" data-price="4">A10 LPro Passcode or Hello no signal bypass - $4</option>
+                 <option value="5" data-price="5">A11 LPro Passcode or Hello no signal bypass - $5</option>
 
-            <div class="modal-footer">
-                <a href="/orders"><button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button></a>
-                <button type="button" class="btn btn-success" id="submitBtn">Submit</button>
+                 <option value="90" data-price="90">IPhone XR Lost / Clean mode Plist Service - $90</option>
+                 <option value="120" data-price="120">IPhone 11 Lost / Clean mode Plist Service - $120</option>
+                 <option value="140" data-price="140">IPhone 11 Pro Lost / Clean mode Plist Service - $140</option>
+                 <option value="150" data-price="150">IPhone 11 Pro Max Lost / Clean mode Plist Service - $150</option>
+                 <option value="110" data-price="110">IPhone 12 mini Lost / Clean mode Plist Service - $110</option>
+                 <option value="130" data-price="130">IPhone 12 Lost / Clean mode Plist Service - $130</option>
+                 <option value="170" data-price="170">IPhone 12 Pro Lost / Clean mode Plist Service - $170</option>
+                 <option value="185" data-price="185">IPhone 12 Pro Max Lost / Clean mode Plist Service - $185</option>
+                 <option value="140" data-price="140">IPhone 13 mini Lost / Clean mode Plist Service - $140</option>
+                 <option value="200" data-price="200">IPhone 13 Lost / Clean mode Plist Service - $200</option>
+                 <option value="230" data-price="230">IPhone 13 Pro Lost / Clean mode Plist Service - $230</option>
+                 <option value="250" data-price="260">IPhone 13 Pro Max Lost / Clean mode Plist Service - $260</option>
+                 <option value="280" data-price="280">IPhone 14 Lost / Clean mode Plist Service - $280</option>
+                 <option value="295" data-price="295">IPhone 14 PlusLost / Clean mode Plist Service - $295</option>
+                 <option value="310" data-price="310">IPhone 14 Pro Lost / Clean mode Plist Service - $310</option>
+                 <option value="350" data-price="350">IPhone 14 Pro Max Lost / Clean mode Plist Service - $350</option>
+
+                
+            </select>
+        </div>
+ <br>
+        <!-- Add a div to display the order result message -->
+        <div id="orderResultMessage" style="display: none;"></div>
+
+<br>
+        <!-- IMEI Number and Processing Time fields -->
+        <div id="imeiProcessingFields" style="display: none;">
+            <div class="form-group">
+                <label for="imei">IMEI Number:</label>
+                <input type="text" class="form-control" id="imei" name="imei">
             </div>
-        </form>
-    </div>
+<br>
+            <div class="form-group">
+                <label for="processing_time"> Processing Time:</label>
+                <select class="form-control" id="processing_time" name="processing_time">
+                    <option value="1-10 Minutes">1-10 Minutes</option>
+                    <!-- Add more processing time options if needed -->
+                </select>
+            </div>
+        </div>
+        <br>
+        <button type="submit" class="btn btn-success">Submit Order</button>
+    </form>
 </div>
 
 <%- include("partials/footer"); -%>
 
-<script>
+   <!-- Add Bootstrap JS and jQuery scripts if needed -->
+   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
    
+   <script>
+    const deviceSelect = document.getElementById('device');
+    const imeiProcessingFields = document.getElementById('imeiProcessingFields');
+    const orderResultMessage = document.getElementById('orderResultMessage');
 
-
-
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const serviceSelect = document.getElementById('serviceSelect');
-        const dynamicDiv = document.getElementById('dynamicDiv');
-        const dynamicTableBody = document.getElementById('dynamicTableBody');
-        const serviceModal = document.getElementById('serviceModal');
-        const serviceModalBody = document.getElementById('serviceModalBody');
-
-        // Service data using a switch statement
-        function getServiceDetails(service) {
-            switch (service) {
-                case "SMD HELLO WITH SIGNAL Order":
-                    return [
-                        {
-                            order: "IPhone 6s/6s+",
-                            deliveryTime: "Instant",
-                            price: "$10",
-                        },
-                        {
-                            order: "IPhone 7/7+",
-                            deliveryTime: "Instant",
-                            price: "$16",
-                        },
-                        {
-                            order: "IPhone 8/8+",
-                            deliveryTime: "Instant",
-                            price: "$25",
-                        },
-                        {
-                            order: "IPhone X",
-                            deliveryTime: "Instant",
-                            price: "$32",
-                        }
-                    ];
-                    case "IRemoval Pro Hello with Signal ":
-                    return [
-                        {
-                            order: "IPhone 6s/6s+",
-                            deliveryTime: "Instant",
-                            price: "$12",
-                        },
-                        {
-                            order: "IPhone 7/7+",
-                            deliveryTime: "Instant",
-                            price: "$18",
-                        },
-                        {
-                            order: "IPhone 8/8+",
-                            deliveryTime: "Instant",
-                            price: "$28",
-                        },
-                        {
-                            order: "IPhone X",
-                            deliveryTime: "Instant",
-                            price: "$35",
-                        }
-                    ];
-                    case "smd activator":
-                    return [
-                        {
-                            order: "IPhone 5s",
-                            deliveryTime: "Instant",
-                            price: "$3",
-                        },
-                        {
-                            order: "IPhone 6/6+",
-                            deliveryTime: "Instant",
-                            price: "$6",
-                        }
-                    ];
-                case "Lpro passcode or Hello no signal Order":
-                    return [
-                        {
-                            order: "LPro A9 passcode w/signal /hello bypass no signal ",
-                            deliveryTime: "Instant",
-                            price: "$3",
-                        },
-                        {
-                            order: "LPro A10 passcode w/signal /hello bypass no signal ",
-                            deliveryTime: "Instant",
-                            price: "$4",
-                        },
-                        {
-                            order: "LPro A11 passcode w/signal /hello bypass no signal ",
-                            deliveryTime: "Instant",
-                            price: "$5",
-                        }
-                    ];
-                 case "Plist Service Order":
-            return [
-                {
-                    order: "iPhone XR",
-                    deliveryTime: "Instant - 30min",
-                    price: "$90",
-                },
-                {
-                    order: "IPhone 11",
-                    deliveryTime: "Instant - 30min",
-                    price: "$120",
-                },
-                {
-                    order: "IPhone 11 Pro",
-                    deliveryTime: "Instant - 30min",
-                    price: "$140",
-                },
-                {
-                    order: "IPhone 11 Pro Max",
-                    deliveryTime: "Instant - 30min",
-                    price: "$150",
-                },
-                {
-                    order: "IPhone 12 mini",
-                    deliveryTime: "Instant - 30min",
-                    price: "$110",
-                },
-                {
-                    order: "IPhone 12 ",
-                    deliveryTime: "Instant - 30min",
-                    price: "$130",
-                },
-                {
-                    order: "IPhone 12 Pro",
-                    deliveryTime: "Instant - 30min",
-                    price: "$170",
-                },
-                {
-                    order: "IPhone 12 Pro Max",
-                    deliveryTime: "Instant - 30min",
-                    price: "$185",
-                },
-                {
-                    order: "IPhone 13 mini",
-                    deliveryTime: "Instant - 30min",
-                    price: "$140",
-                },
-                {
-                    order: "IPhone 13",
-                    deliveryTime: "Instant - 30min",
-                    price: "$200",
-                },
-                {
-                    order: "IPhone 13 Pro",
-                    deliveryTime: "Instant - 30min",
-                    price: "$230",
-                },
-                {
-                    order: "IPhone 13 Pro Max",
-                    deliveryTime: "Instant - 30min",
-                    price: "$260",
-                },
-                {
-                    order: "IPhone 14",
-                    deliveryTime: "Instant - 30min",
-                    price: "$280",
-                },
-                {
-                    order: "IPhone 14 Plus",
-                    deliveryTime: "Instant - 30min",
-                    price: "$295",
-                },
-                {
-                    order: "IPhone 14 pro",
-                    deliveryTime: "Instant - 30min",
-                    price: "$310",
-                },
-                {
-                    order: "IPhone 14 Pro Max",
-                    deliveryTime: "Instant - 30min",
-                    price: "$350",
-                },
-
-            ];
-        
-                    
-                default:
-                    return [
-                        {
-                            order: "N/A",
-                            deliveryTime: "N/A",
-                            price: "N/A",
-                        }
-                    ];
-            }
+    deviceSelect.addEventListener('change', function () {
+        if (deviceSelect.value === '') {
+            imeiProcessingFields.style.display = 'none';
+        } else {
+            imeiProcessingFields.style.display = 'block';
         }
-        // Function to open the modal with service details
-        function openServiceModal(serviceDetails) {
-            serviceModalBody.innerHTML = '';
-
-            serviceDetails.forEach(detail => {
-                const serviceDetailDiv = document.createElement('div');
-                serviceDetailDiv.innerHTML = `
-                    <p><strong>Order:</strong> ${detail.order}</p>
-                    <p><strong>Delivery Time:</strong> ${detail.deliveryTime}</p>
-                    <p><strong>Price:</strong> ${detail.price}</p>
-                `;
-
-                // Input field
-                const inputField = document.createElement('input');
-                inputField.type = 'text';
-                inputField.className = 'form-control';
-                inputField.placeholder = 'Enter your imei or sn ';
-                inputField.name = "imeiOrSn";
-                inputField.required = true;
-                inputField.id = "imeiOrSn";
-                
-
-                serviceModalBody.appendChild(serviceDetailDiv);
-                serviceModalBody.appendChild(inputField);
-            });
-
-            // Show the modal
-            $(serviceModal).modal('show');
-        }
-
-        serviceSelect.addEventListener('change', function () {
-            const selectedOption = serviceSelect.value;
-
-            if (selectedOption !== 'service0') {
-                // Show the dynamic div and populate the table
-                dynamicDiv.style.display = 'block';
-
-                // Retrieve service details based on the selected option
-                const serviceDetails = getServiceDetails(selectedOption);
-
-                // Populate the table with service details
-                dynamicTableBody.innerHTML = '';
-
-                serviceDetails.forEach(detail => {
-                    const tableRow = document.createElement('tr');
-                    tableRow.innerHTML = `
-                        <td>${detail.order}</td>
-                        <td>${detail.deliveryTime}</td>
-                        <td>${detail.price}</td>
-                    `;
-
-                    tableRow.addEventListener('click', () => {
-                        // Open the modal when the table row is clicked
-                        openServiceModal(serviceDetails);
-                    });
-
-                    dynamicTableBody.appendChild(tableRow);
-                });
-            } else {
-                // Hide the dynamic div if the default option is selected
-                dynamicDiv.style.display = 'none';
-            }
-        });
     });
-     
-    const btn = document.getElementById('submitBtn')
-    const errModal = document.getElementById('errorModalBody')
-    
-    const errorEmpty = document.getElementById('errorEmpty')
-
-
-btn.addEventListener('click',()=>{
-
-    
-        errModal.style.display = "block"
-   
-    
-})
 
    
-
+       
 </script>
+
+
+
