@@ -11,6 +11,15 @@ const nodemailer = require('nodemailer');
 const Redis = require('ioredis');
 const MongoDBStore = require('connect-mongodb-session')(session);
 const schedule = require('node-schedule');
+const paypal = require('paypal-rest-sdk')
+
+paypal.configure({
+    "mode":'sandbox',
+    'client_id': process.env.PAYPAL_CLIENT_ID ,
+    'client_secret': process.env.PAYPAL_SECRET_KEY
+})
+
+
 
 const app = express()
 
@@ -336,13 +345,45 @@ app.post('/orders', async (req, res) => {
              selectedDevice = parseFloat(selectedDevice);
              
 
-            user.paidCredits += selectedDevice
+            user.paidCredits += selectedDevice  
             await user.save();
 
             user.waitingAction += 1; // Increment the waiting action count
             await user.save();
 
-
+            
+              // Send a confirmation email to the user
+            const userEmail = req.user.username; // Assuming you have the user's email address
+            const subject = 'IMEI Order Confirmation';
+            const message = `Your IMEI order was sucessfully placed . Your order details: ${imei}`;
+                         
+                // Create a transporter object using your Gmail credentials
+                const transporter = nodemailer.createTransport({
+                    service:'gmail',
+                    port:456,
+                    secure:true,
+                    auth:{
+                        user: "darkunlocks1@gmail.com",
+                        pass:"nnzw lyec ivtj soyw"
+                    }
+                })
+                
+                // Create and send the email notification
+                const mailOptions = {
+                  from: 'darkunlocks1@gmail.com',
+                  to: userEmail, // Replace with your notification recipient's email
+                  subject: subject,
+                  text: message ,
+                };
+                
+                transporter.sendMail(mailOptions, (error, info) => {
+                  if (error) {
+                    console.error('Error sending email notification:', error);
+                  } else {
+                    console.log('Email notification sent:', info.response);
+                  }
+                });
+                
             // Send a success response with the updated balance
             return res.redirect('/order-sucessfully');
 
@@ -484,8 +525,157 @@ app.get('/credits',(req,res)=>{
    }
 })
 
+// Define a middleware to check if the user is authenticated
+function ensureAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    // Redirect unauthenticated users to the login page or any other appropriate route
+    res.redirect('/login');
+}
+
 
 //Post methoods
+let amount;
+app.post('/pay', ensureAuthenticated, (req, res) => {
+
+     amount = parseFloat(req.body.amount);
+
+
+    const create_payment_json = {
+        "intent": "sale",
+        "payer": {
+            "payment_method": "paypal"
+        },
+        "redirect_urls": {
+            "return_url": "https://darkunlocks.onrender.com/payment_success",
+            "cancel_url": "https://darkunlocks.onrender.com/payment_cancel"
+        },
+        "transactions": [{
+            "item_list": {
+                "items": [{
+                    "name": "Buy Credits",
+                    "sku": "001",
+                    "price": amount,
+                    "currency": "USD",
+                    "quantity": 1
+                }]
+            },
+            "amount": { "total": amount, "currency": "USD" },
+            "description": "Adding credits"
+        }]
+    };
+         console.log('Amount ' + typeof amount , amount)
+
+     paypal.payment.create(create_payment_json, (error, payment) => {
+        if (error) {
+            console.error("Error occurred while creating payment");
+            // Handle the error appropriately (e.g., send an error response).
+        } else {
+            for (let i = 0; i < payment.links.length; i++) {
+                if (payment.links[i].rel === 'approval_url') {
+                    res.redirect(payment.links[i].href);
+                    break;
+                }
+            }
+        }
+    });
+});
+
+app.get('/payment_success', async (req, res) => {
+    const payerId = req.query.PayerID;
+    const paymentId = req.query.paymentId;
+    const userId = req.user._id; // Replace with how you identify the user
+
+    // Check if payerId, paymentId, and amount are valid
+    if (!payerId || !paymentId || !amount || !userId) {
+        console.error("Invalid parameters.");
+        return res.redirect('/payment_cancel');
+    }
+
+    try {
+        // Retrieve the user by their ID
+        const user = await User.findById(userId);
+
+        if (!user) {
+            console.error("User not found.");
+            return res.redirect('/payment_error');
+        }
+
+        // Calculate the updated balance by adding the payment amount to the current balance
+        const updatedBalance = user.balance + amount;
+        console.log('new balance : ',updatedBalance , typeof updatedBalance)
+
+        // Update the user's balance in the database
+        await User.findByIdAndUpdate(userId, { balance: updatedBalance });
+
+        // Format the date and time
+        const currentTimestamp = Date.now();
+        const currentDate = new Date(currentTimestamp);
+
+        const dateOptions = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        };
+        const formattedDate = currentDate.toLocaleDateString('en-US', dateOptions);
+
+        const timeOptions = {
+            hour: 'numeric',
+            minute: '2-digit',
+        };
+        const formattedTime = currentDate.toLocaleTimeString('en-US', timeOptions);
+
+
+         // Send a confirmation email to the user
+         const userEmail = req.user.username; // Assuming you have the user's email address
+         const subject = 'New payment recieved from your website';
+         const message = `A new user ${userEmail}. has added $ ${amount} credits`;
+                      
+             // Create a transporter object using your Gmail credentials
+             const transporter = nodemailer.createTransport({
+                 service:'gmail',
+                 port:456,
+                 secure:true,
+                 auth:{
+                     user: "darkunlocks1@gmail.com",
+                     pass:"nnzw lyec ivtj soyw"
+                 }
+             })
+             
+             // Create and send the email notification
+             const mailOptions = {
+               from: 'darkunlocks1@gmail.com',
+               to: "strongadas009@gmail.com", 
+               subject: subject,
+               text: message ,
+             };
+             
+             transporter.sendMail(mailOptions, (error, info) => {
+               if (error) {
+                 console.error('Error sending email notification:', error);
+               } else {
+                 console.log('Email notification sent:', info.response);
+               }
+             });
+
+
+        // Render the success page with the updated balance
+        res.render("success", { amount, paymentId, formattedTime, formattedDate, balance: updatedBalance });
+    } catch (error) {
+        console.error(error);
+        return res.redirect('/payment_cancel');
+    }
+});
+
+
+
+
+
+app.get('/payment_cancel',(req,res)=>{
+    res.render('cancelled')
+})
+
 app.post('/profile', (req, res) => {
     if (req.isAuthenticated()) {
       const { name, username } = req.body;
@@ -547,8 +737,7 @@ app.post("/", (req, res) => {
             
             passport.authenticate('local')(req, res, () => {
                 res.redirect('/dash');
-                const nodemailer = require('nodemailer');
-
+                
                 // Create a transporter object using your Gmail credentials
                 const transporter = nodemailer.createTransport({
                     service:'gmail',

@@ -2,34 +2,30 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9149809198719246"
      crossorigin="anonymous"></script>
      
-<div class="container mt-5">
-    <h1>Payment Details</h1>
-    
-    <h2>PayPal Payment</h2>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th scope="col">Field</th>
-                <th scope="col">Details</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>PayPal Address </strong>- Friends & Family only </td>
-                <td>darkunlocks1@gmail.com</td>
-            </tr>
-            <tr>
-                <td><strong>Telegram id</strong></td>
-                <td><a href="https://t.me/darkunlocksOwner" target="_blank">Dark Unlocks Owner</a></td>
-            </tr>
-            <tr>
-                <td>Take a screenshot and send to Admin</td>
-                <td><a href="https://t.me/darkunlocksOwner" target="_blank">Dark Unlocks Owner</a></td>
-            </tr>
-        </tbody>
-    </table>
 
-    <h2>Binance Auto Payment (USDT)</h2>
+     <div class="container mt-5">
+        <h2>PayPal Auto Payment </h2>
+        <form action="/pay" method="post">
+            <input type="hidden" name="cmd" value="_xclick">
+            <input type="hidden" name="business" value="strongadas009@gmail.com"> <!-- Your PayPal email -->
+            <input type="hidden" name="item_name" value="Payment">
+            
+            <div class="form-group">
+                <label for="amount">Amount:</label>
+                <input type="text" class="form-control" id="amount" name="amount" placeholder="Enter the amount">
+            </div>
+            <br>
+            <button type="submit" class="btn btn-success">Add Credits</button>
+        </form>
+    </div>
+
+
+
+
+<div class="container mt-5">
+    <h1>Manual Payment Details</h1>
+    
+    <h2>Binance Payment (USDT)</h2>
     <table class="table table-bordered">
         <thead>
             <tr>
