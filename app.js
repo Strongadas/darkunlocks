@@ -14,9 +14,9 @@ const schedule = require('node-schedule');
 const paypal = require('paypal-rest-sdk')
 
 paypal.configure({
-    "mode":'live',
-    'client_id': process.env.PAYPAL_CLIENT_ID ,
-    'client_secret': process.env.PAYPAL_SECRET_KEY
+    mode: 'live', 
+    client_id:  process.env.PAYPAL_CLIENT_ID ,
+    client_secret: process.env.PAYPAL_SECRET_KEY
 })
 
 
@@ -440,13 +440,6 @@ app.get('/view-orders', async (req, res) => {
     }
 });
 
-    
-
-
-
-
-
-
 
 
 app.get('/profile', (req, res) => {
@@ -524,6 +517,7 @@ app.get('/credits',(req,res)=>{
        res.redirect('/');
    }
 })
+
 
 // Define a middleware to check if the user is authenticated
 function ensureAuthenticated(req, res, next) {
