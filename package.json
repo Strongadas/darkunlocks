@@ -25,6 +25,7 @@
     "mongoose": "^6.10.0",
     "multer": "^1.4.5-lts.1",
     "node-fecth": "^0.0.1-security",
+    "node-fetch": "^3.3.2",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.5",
     "passport": "^0.6.0",

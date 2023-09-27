@@ -530,145 +530,185 @@ function ensureAuthenticated(req, res, next) {
 
 
 //Post methoods
-let amount;
+let amount ;
+let totalAmount = {}
 app.post('/pay', ensureAuthenticated, (req, res) => {
-
+    // Parse the amount from the request body
      amount = parseFloat(req.body.amount);
 
+    // Check if the amount is a valid number
+    if (isNaN(amount) || amount <= 0) {
+        return res.status(400).send('Invalid amount');
+    }
 
-    const create_payment_json = {
-        "intent": "sale",
-        "payer": {
-            "payment_method": "paypal"
+    // Construct the amount object
+     totalAmount = {
+        currency: 'USD',
+        total: amount.toFixed(2) // Format total as a string with two decimal places
+    };
+
+    // Construct the payment request
+    const paymentRequest = {
+        intent: 'sale',
+        payer: {
+            payment_method: 'paypal'
         },
-        "redirect_urls": {
-            "return_url": "https://darkunlocks.onrender.com/payment_success",
-            "cancel_url": "https://darkunlocks.onrender.com/payment_cancel"
+        redirect_urls: {
+            return_url: 'https://darkunlocks.onrender.com/payment_success',
+            cancel_url: 'https://darkunlocks.onrender.com/payment_error'
         },
-        "transactions": [{
-            "item_list": {
-                "items": [{
-                    "name": "Buy Credits",
-                    "sku": "001",
-                    "price": amount,
-                    "currency": "USD",
-                    "quantity": 1
+        transactions: [{
+            item_list: {
+                items: [{
+                    name: 'Credits',
+                    sku: 'credits',
+                    price: totalAmount.total,
+                    currency: totalAmount.currency,
+                    quantity: 1
                 }]
             },
-            "amount": { "total": amount, "currency": "USD" },
-            "description": "Adding credits"
+            amount: totalAmount,
+            description: 'Buying credits'
         }]
     };
-         console.log('Amount ' + typeof amount , amount)
 
-     paypal.payment.create(create_payment_json, (error, payment) => {
+    // Create the payment
+    paypal.payment.create(paymentRequest, (error, payment) => {
+
         if (error) {
-            console.error("Error occurred while creating payment");
-            // Handle the error appropriately (e.g., send an error response).
+            console.error('Error occurred while creating payment:', error);
+            return res.status(500).send('Internal Server Error');
+        }
+
+        // Redirect to PayPal approval URL
+        const approvalUrl = payment.links.find(link => link.rel === 'approval_url');
+
+        if (!approvalUrl) {
+            console.error('Approval URL not found in the PayPal response.');
+            return res.status(500).send('Internal Server Error');
+        }
+        console.log('Payment created sucessfully')
+        res.redirect(approvalUrl.href);
+    });
+});
+
+
+
+// Payment success route
+
+app.get('/payment_success', async (req, res) => {
+    const payerId = req.query.PayerID;
+    const paymentId = req.query.paymentId;
+    const userId = req.user._id;
+
+    // Check if payerId, paymentId, and userId are valid
+    if (!payerId || !paymentId || !userId) {
+        console.error("Invalid parameters.");
+        return res.redirect('/payment_cancel');
+    }
+
+    const execute_payment_json = {
+        "payer_id": payerId,
+        "transactions": [{
+            "amount": totalAmount
+        }]
+    };
+
+    console.log("payerId:", payerId);
+    console.log("amount:", totalAmount);
+
+    paypal.payment.execute(paymentId, execute_payment_json, async (err, payment) => {
+        if (err) {
+            console.error(err.response);
+            return res.redirect('/payment_cancel');
+
         } else {
-            for (let i = 0; i < payment.links.length; i++) {
-                if (payment.links[i].rel === 'approval_url') {
-                    res.redirect(payment.links[i].href);
-                    break;
+
+            console.log("Payment successful");
+            console.log(JSON.stringify(payment));
+
+            try {
+                // Retrieve the user by their ID
+                const user = await User.findById(userId);
+
+                if (!user) {
+                    console.error("User not found.");
+                    return res.redirect('/payment_error');
                 }
+
+                // Calculate the updated balance by adding the payment amount to the current balance
+                
+                console.log("total amount while updating :", amount)
+                const updatedBalance = user.balance + amount;
+
+                console.log('New balance:', updatedBalance);
+
+                // Update the user's balance in the database
+                await User.findByIdAndUpdate(userId, { balance: updatedBalance });
+
+                // Format the date and time
+                const currentTimestamp = Date.now();
+                const currentDate = new Date(currentTimestamp);
+
+                const dateOptions = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                };
+                const formattedDate = currentDate.toLocaleDateString('en-US', dateOptions);
+
+                const timeOptions = {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                };
+                const formattedTime = currentDate.toLocaleTimeString('en-US', timeOptions);
+
+                // Send a confirmation email to the user
+                const userEmail = req.user.username; // Assuming you have the user's email address
+                const subject = 'New payment received from your website';
+                const message = `A new user ${userEmail} has added $${totalAmount} credits`;
+
+                // Create a transporter object using your email credentials
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                        user: "darkunlocks1@gmail.com",
+                        pass: "nnzw lyec ivtj soyw"
+                    }
+                });
+
+                // Create and send the email notification
+                const mailOptions = {
+                    from: 'darkunlocks1@gmail.com',
+                    to: 'strongadas009@gmail.com',
+                    subject: subject,
+                    text: message,
+                };
+
+                const info = await transporter.sendMail(mailOptions);
+                console.log('Email notification sent:', info.response);
+
+                // Render the success page with the updated balance
+                res.render("success", { amount: amount, paymentId, formattedTime, formattedDate, balance: updatedBalance });
+            } catch (error) {
+                console.error('Error occurred while processing user or sending email:', error);
+                res.redirect('/payment_error');
             }
         }
     });
 });
 
-app.get('/payment_success', async (req, res) => {
-    const payerId = req.query.PayerID;
-    const paymentId = req.query.paymentId;
-    const userId = req.user._id; // Replace with how you identify the user
-
-    // Check if payerId, paymentId, and amount are valid
-    if (!payerId || !paymentId || !amount || !userId) {
-        console.error("Invalid parameters.");
-        return res.redirect('/payment_cancel');
-    }
-
-    try {
-        // Retrieve the user by their ID
-        const user = await User.findById(userId);
-
-        if (!user) {
-            console.error("User not found.");
-            return res.redirect('/payment_error');
-        }
-
-        // Calculate the updated balance by adding the payment amount to the current balance
-        const updatedBalance = user.balance + amount;
-        console.log('new balance : ',updatedBalance , typeof updatedBalance)
-
-        // Update the user's balance in the database
-        await User.findByIdAndUpdate(userId, { balance: updatedBalance });
-
-        // Format the date and time
-        const currentTimestamp = Date.now();
-        const currentDate = new Date(currentTimestamp);
-
-        const dateOptions = {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        };
-        const formattedDate = currentDate.toLocaleDateString('en-US', dateOptions);
-
-        const timeOptions = {
-            hour: 'numeric',
-            minute: '2-digit',
-        };
-        const formattedTime = currentDate.toLocaleTimeString('en-US', timeOptions);
 
 
-         // Send a confirmation email to the user
-         const userEmail = req.user.username; // Assuming you have the user's email address
-         const subject = 'New payment recieved from your website';
-         const message = `A new user ${userEmail}. has added $ ${amount} credits`;
-                      
-             // Create a transporter object using your Gmail credentials
-             const transporter = nodemailer.createTransport({
-                 service:'gmail',
-                 port:456,
-                 secure:true,
-                 auth:{
-                     user: "darkunlocks1@gmail.com",
-                     pass:"nnzw lyec ivtj soyw"
-                 }
-             })
-             
-             // Create and send the email notification
-             const mailOptions = {
-               from: 'darkunlocks1@gmail.com',
-               to: "strongadas009@gmail.com", 
-               subject: subject,
-               text: message ,
-             };
-             
-             transporter.sendMail(mailOptions, (error, info) => {
-               if (error) {
-                 console.error('Error sending email notification:', error);
-               } else {
-                 console.log('Email notification sent:', info.response);
-               }
-             });
 
 
-        // Render the success page with the updated balance
-        res.render("success", { amount, paymentId, formattedTime, formattedDate, balance: updatedBalance });
-    } catch (error) {
-        console.error(error);
-        return res.redirect('/payment_cancel');
-    }
+
+app.get('/payment_error', ensureAuthenticated,(req, res) => {
+    const paymentStatus = req.query.status; // Get the payment status query parameter
+    console.log("payment ",paymentStatus)
+    // Render the 'cancelled' view with the payment status
+    res.render('cancelled');
 });
-
-
-
-
-
-app.get('/payment_cancel',(req,res)=>{
-    res.render('cancelled')
-})
 
 app.post('/profile', (req, res) => {
     if (req.isAuthenticated()) {
