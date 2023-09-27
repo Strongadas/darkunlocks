@@ -6,7 +6,12 @@
 
 
      <div class="container mt-5">
-        <h2>PayPal Auto Payment </h2>
+        <h1 class="paypal-heading">
+            <img src="/images/paypal2.png" alt="paypal" width="150" height="90" class="paypal-logo">
+            Auto    <span id="pay"> Payment </span>
+        </h1>
+        
+        
         <form action="/pay" method="post">
             <input type="hidden" name="cmd" value="_xclick">
             <input type="hidden" name="business" value="strongadas009@gmail.com"> <!-- Your PayPal email -->
@@ -14,12 +19,10 @@
             
             <div class="form-group">
                 <label for="amount">Amount:</label>
-                <input type="text" class="form-control" id="amount" name="amount" placeholder="Enter the amount">
+                <input type="text" class="form-control" id="amount" name="amount" placeholder="Enter the amount">       
             </div>
             <br>
-            <div id="paypal-button-container"></div>
-           
-            <button type="submit" class="btn btn-success">Add Credits</button>
+            <button type="submit" id="btn-paypal"><img src="/images/paypalbtn.jpeg" alt="paypal"></button>
         </form>
     </div>
 

@@ -620,7 +620,7 @@ app.get('/payment_success', async (req, res) => {
     paypal.payment.execute(paymentId, execute_payment_json, async (err, payment) => {
         if (err) {
             console.error(err.response);
-            return res.redirect('/payment_cancel');
+            return res.redirect('/payment_error');
 
         } else {
 
@@ -650,23 +650,19 @@ app.get('/payment_success', async (req, res) => {
                 const currentTimestamp = Date.now();
                 const currentDate = new Date(currentTimestamp);
 
-                const dateOptions = {
+                const formattedDateTime = currentDate.toLocaleString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
-                };
-                const formattedDate = currentDate.toLocaleDateString('en-US', dateOptions);
-
-                const timeOptions = {
                     hour: 'numeric',
                     minute: '2-digit',
-                };
-                const formattedTime = currentDate.toLocaleTimeString('en-US', timeOptions);
+                    timeZoneName: 'short'
+                });
 
                 // Send a confirmation email to the user
                 const userEmail = req.user.username; // Assuming you have the user's email address
                 const subject = 'New payment received from your website';
-                const message = `A new user ${userEmail} has added $${totalAmount} credits`;
+                const message = `A new user ${userEmail} has added $${amount} credits`;
 
                 // Create a transporter object using your email credentials
                 const transporter = nodemailer.createTransport({
@@ -689,7 +685,7 @@ app.get('/payment_success', async (req, res) => {
                 console.log('Email notification sent:', info.response);
 
                 // Render the success page with the updated balance
-                res.render("success", { amount: amount, paymentId, formattedTime, formattedDate, balance: updatedBalance });
+                res.render("success", { amount: amount, paymentId, formattedDateTime, balance: updatedBalance });
             } catch (error) {
                 console.error('Error occurred while processing user or sending email:', error);
                 res.redirect('/payment_error');
@@ -697,9 +693,6 @@ app.get('/payment_success', async (req, res) => {
         }
     });
 });
-
-
-
 
 
 
