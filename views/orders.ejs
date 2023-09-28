@@ -1,7 +1,7 @@
 <%- include("partials/header-user"); -%>
 
 <div class="container mt-5">
-    <label for="balance">Your Balance: $<%= balance %></label> <br>
+    <label for="balance"><strong>Your Balance:</strong> $<%= balance %></label> <br>
     <h2>Place a New IMEI Order</h2>
     <form action="/orders" method="post">
 
@@ -59,7 +59,7 @@
         <div id="imeiProcessingFields" style="display: none;">
             <div class="form-group">
                 <label for="imei">IMEI Number:</label>
-                <input type="text" class="form-control" id="imei" name="imei">
+                <input type="text" class="form-control" id="imei" name="imei" required>
             </div>
 <br>
             <div class="form-group">

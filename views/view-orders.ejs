@@ -12,12 +12,46 @@
             <!-- Add your dashboard content here -->
             <p><strong>Waiting action:</strong> <%= waitingActionCount %> </p>
             <p><strong>In process:</strong> <%= inprocessCount %> </p>
-            <p><strong>success:</strong><%= successCount %></p>
+            <p><strong>Success:</strong><%= successCount %></p>
+            <p><strong>Rejected:</strong> <%= rejectedCount  %> </p>
             <p><Strong>Last Order:</Strong> <%= date %></p>
+            
             <!-- You can add more content, charts, or widgets here -->
         </div>
     </div>
 </div>
+
+
+
+<h1 class="mt-4 mb-3">IMEI Orders</h1>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">IMEI</th>
+                <th scope="col">Order Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% imeiList.forEach(imeiObject => { %>
+                <tr style="color: <%= imeiObject.color %>;">
+                    <td><%= imeiObject.imeiNumber %></td>
+                    <td style="color: <%= imeiObject.color %>;">
+                        <%= imeiObject.status %>
+                    </td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+
+
 
 </div>
 

@@ -33,6 +33,9 @@ app.set('view engine','ejs')
 app.set('views', __dirname + '/views')
 app.use(bodyParser.urlencoded({extended:true}))
 
+
+
+
 app.use(session({
     secret:process.env.SECRET,
     resave:false,
@@ -59,7 +62,12 @@ const userSchema = new mongoose.Schema({
     success:{type:Number,default:0},
     rejected:{type:Number,default:0},
     cancelled:{type:Number,default:0},
-    imeiNumbers: [{ type: String }],
+    imei: [
+        {
+            imeiNumber: { type: String, required: true },
+            status: { type: String, enum: ['waiting', 'inprocess', 'success', 'rejected'], default: 'waiting' },
+        }
+    ],
     addedAt: {
         type: Date,
         default: Date.now,
@@ -92,11 +100,11 @@ passport.deserializeUser((id, done) => {
 };
 
 
-//// Schedule a job to run every 10 minutes
-const job = schedule.scheduleJob('*/3 * * * *', async () => {
-    // Implement logic to remove waiting actions and increase inprocess here
-    // For example:
-    
+
+
+
+// Job to transition from 'waiting' to 'inprocess' every 3 minutes
+const transitionToInprocessJob = schedule.scheduleJob('*/3 * * * *', async () => {
     const users = await User.find({ waitingAction: { $gt: 0 } });
 
     for (const user of users) {
@@ -106,6 +114,39 @@ const job = schedule.scheduleJob('*/3 * * * *', async () => {
         await user.save();
     }
 });
+
+// Job to transition from 'inprocess' to 'rejected' after 10 hours
+const transitionToRejectedJob = schedule.scheduleJob(new Date(Date.now() + 10 * 60 * 60 * 1000), async () => {
+    const users = await User.find({ inprocess: { $gt: 0 } });
+
+    for (const user of users) {
+        for (const imei of user.imei) {
+            if (imei.status === 'inprocess') {
+                imei.status = 'rejected';
+            }
+        }
+
+        await user.save();
+    }
+});
+
+
+function getColor(status) {
+    switch (status) {
+        case 'waiting':
+            return 'blue';
+        case 'inprocess':
+            return 'orange';
+        case 'rejected':
+            return 'red';
+        default:
+            return 'black'; // Default color or handle other cases
+    }
+}
+
+// Make the getColor function available to the EJS template
+app.locals.getColor = getColor;
+
 
 
 
@@ -121,7 +162,8 @@ app.get('/admin', isAdmin, (req, res) => {
         if (!user) {
             return res.status(404).send('User not found');
         }
-        // Render the 'dash' template and pass the user data
+
+         // Render the 'dash' template and pass the user data
              // Fetch the balance data
              const balance = user.balance || 0; 
              const paidCredits = user.paidCredits || 0;
@@ -311,12 +353,10 @@ app.get('/orders',(req,res)=>{
 
 //POST route for submitting the order
 
+
 app.post('/orders', async (req, res) => {
     if (req.isAuthenticated()) {
-        // Assuming you have user authentication and user ID available in req.user
         const userId = req.user.id;
-        console.log('User ID:', userId);
-        // Retrieve user's balance from the database
         const user = await User.findById(userId);
 
         if (!user) {
@@ -324,83 +364,107 @@ app.post('/orders', async (req, res) => {
         }
 
         let selectedDevice = req.body.device;
-        const orderPrice = parseFloat(req.body.device_price); // Parse the order price from the form data
         const userBalance = user.balance;
-        const imei = req.body.imei
+        const newImeiNumber = req.body.imei;
 
-        
-        console.log(selectedDevice)
-        console.log(orderPrice)
-        console.log(userBalance)
-        console.log(imei)
-
-        
+        console.log(selectedDevice);
+        console.log(userBalance);
+        console.log(newImeiNumber);
 
         if (selectedDevice <= userBalance) {
             // User has enough balance, process the order here
             // Deduct the order price from the user's balance
-            user.balance -= selectedDevice;// Subtract the order price from the user's balance
-            // Convert user.paidCredits to a number before addition
-             
-             selectedDevice = parseFloat(selectedDevice);
-             
+            user.balance -= selectedDevice;
+            selectedDevice = parseFloat(selectedDevice);
+            user.paidCredits += selectedDevice;
 
-            user.paidCredits += selectedDevice  
+            // Push IMEI to the user's array with initial status 'waiting'
+            user.imei.push({ imeiNumber: newImeiNumber, status: 'waiting' });
+
             await user.save();
+            console.log('User after updating imeiNumbers:', user);
 
             user.waitingAction += 1; // Increment the waiting action count
             await user.save();
 
-            
-              // Send a confirmation email to the user
-            const userEmail = req.user.username; // Assuming you have the user's email address
+         // Schedule a job to change status to 'inprocess' after 1 minute
+        schedule.scheduleJob(new Date(Date.now() + 3 * 60 * 1000), async () => {
+            const index = user.imei.findIndex(entry => entry.imeiNumber === newImeiNumber);
+            if (index !== -1 && user.imei[index].status === 'waiting') {
+                user.imei[index].status = 'inprocess';
+                try {
+                    await user.save();
+                    console.log('IMEI status changed to inprocess:', newImeiNumber);
+                } catch (error) {
+                    console.error('Error saving user after changing status to inprocess:', error);
+                }
+            }
+        });
+
+        // Schedule a job to change status to 'rejected' after 2 minutes
+        schedule.scheduleJob(new Date(Date.now() + 10 * 60 * 60 * 1000 + 2 * 60 * 1000), async () => {
+            const index = user.imei.findIndex(entry => entry.imeiNumber === newImeiNumber);
+            if (index !== -1 && user.imei[index].status === 'inprocess') {
+                user.imei[index].status = 'rejected';
+                try {
+                    await user.save();
+                    console.log('IMEI status changed to rejected:', newImeiNumber);
+                } catch (error) {
+                    console.error('Error saving user after changing status to rejected:', error);
+                }
+            }
+        });
+
+
+
+            // Send a confirmation email to the user
+            const userEmail = req.user.username;
             const subject = 'IMEI Order Confirmation';
-            const message = `Your IMEI order was sucessfully placed . Your order details: ${imei}`;
-                         
-                // Create a transporter object using your Gmail credentials
-                const transporter = nodemailer.createTransport({
-                    service:'gmail',
-                    port:456,
-                    secure:true,
-                    auth:{
-                        user: "darkunlocks1@gmail.com",
-                        pass:"nnzw lyec ivtj soyw"
-                    }
-                })
-                
-                // Create and send the email notification
-                const mailOptions = {
-                  from: 'darkunlocks1@gmail.com',
-                  to: userEmail, // Replace with your notification recipient's email
-                  subject: subject,
-                  text: message ,
-                };
-                
-                transporter.sendMail(mailOptions, (error, info) => {
-                  if (error) {
+            const message = `Your IMEI order was successfully placed. Your order details: ${newImeiNumber}`;
+
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                port: 456,
+                secure: true,
+                auth: {
+                    user: "darkunlocks1@gmail.com",
+                    pass: "nnzw lyec ivtj soyw"
+                }
+            });
+
+            const mailOptions = {
+                from: 'darkunlocks1@gmail.com',
+                to: userEmail,
+                subject: subject,
+                text: message,
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
                     console.error('Error sending email notification:', error);
-                  } else {
+                } else {
                     console.log('Email notification sent:', info.response);
-                  }
-                });
-                
+                }
+            });
+
             // Send a success response with the updated balance
             return res.redirect('/order-sucessfully');
-
         } else {
             // User doesn't have enough balance
-            return res.render('insufficient-balance'); // Render the GUI page
-
+            return res.render('insufficient-balance');
         }
     } else {
         // User is not authenticated, handle accordingly
         res.redirect('/login');
     }
 });
+
+
 app.get('/order-sucessfully', async (req, res) => {
     // Retrieve the user's waiting action and inprocess counts
     if (req.isAuthenticated()) {
         const userId = req.user.id;
+       
         const user = await User.findById(userId);
 
         if (!user) {
@@ -417,28 +481,47 @@ app.get('/order-sucessfully', async (req, res) => {
         res.redirect('/login');
     }
 })
+// Assuming this is your 'view-orders' route
 app.get('/view-orders', async (req, res) => {
     // Retrieve the user's waiting action and inprocess counts
     if (req.isAuthenticated()) {
         const userId = req.user.id;
+
         const user = await User.findById(userId);
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // Map the IMEI list with color information
+        const imeiList = user.imei.map(imeiObject => ({
+            imeiNumber: imeiObject.imeiNumber,
+            status: imeiObject.status,
+            color: getColor(imeiObject.status),
+        }));
+
         const waitingActionCount = user.waitingAction;
         const inprocessCount = user.inprocess;
-        const successCount = user.success
-        const date = user.addedAt
+        const successCount = user.success;
+        const rejectedCount = user.rejected
+        const date = user.addedAt;
 
-        // Render the HTML with the counts
-        res.render('view-orders', { waitingActionCount, inprocessCount , successCount ,date});
+        // Render the HTML with the counts and IMEI list
+        res.render('view-orders', {
+            waitingActionCount,
+            inprocessCount,
+            successCount,
+            date,
+            user,
+            imeiList,
+            rejectedCount 
+        });
     } else {
         // User is not authenticated, handle accordingly
         res.redirect('/login');
     }
 });
+
 
 
 
@@ -595,7 +678,6 @@ app.post('/pay', ensureAuthenticated, (req, res) => {
 
 
 // Payment success route
-
 app.get('/payment_success', async (req, res) => {
     const payerId = req.query.PayerID;
     const paymentId = req.query.paymentId;
