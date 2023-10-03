@@ -101,8 +101,6 @@ passport.deserializeUser((id, done) => {
 
 
 
-
-
 // Job to transition from 'waiting' to 'inprocess' every 3 minutes
 const transitionToInprocessJob = schedule.scheduleJob('*/3 * * * *', async () => {
     const users = await User.find({ waitingAction: { $gt: 0 } });
@@ -146,7 +144,6 @@ function getColor(status) {
 
 // Make the getColor function available to the EJS template
 app.locals.getColor = getColor;
-
 
 
 
@@ -557,7 +554,9 @@ app.get('/dash', (req, res) => {
 
             // Render the 'dash' template and pass the user data
              // Fetch the balance data
-             const balance = user.balance || 0; 
+             let balance = user.balance || 0; 
+             balance = balance.toFixed(1)
+            
              const paidCredits = user.paidCredits || 0;
              const unpaidCredits = user.unpaidCredits || 0;
              const waitingAction = user.waitingAction || 0;
@@ -567,7 +566,10 @@ app.get('/dash', (req, res) => {
              const cancelled = user.cancelled || 0;
              
              const allOrders = waitingAction + inprocess + success + rejected + cancelled
-             const totalBalance = (user.balance || 0) + (user.paidCredits || 0) + (user.unpaidCredits || 0);
+             let totalBalance = (user.balance || 0) + (user.paidCredits || 0) + (user.unpaidCredits || 0);
+
+              totalBalance = totalBalance.toFixed(1)
+           
 
              // Render the 'dash' view and pass the user and balance data
              res.render('dash', { user: user, balance: balance, paidCredits: paidCredits, unpaidCredits: unpaidCredits , waitingAction: waitingAction ,inprocess:inprocess ,success:success,rejected:rejected, cancelled:cancelled , allOrders:allOrders , totalBalance});
