@@ -3,11 +3,13 @@
 <div class="container mt-5">
     <label for="balance"><strong>Your Balance:</strong> $<%= balance %></label> <br>
     <h2>Place a New IMEI Order</h2>
-    <form action="/orders" method="post">
+    <form action="/orders" method="post"  id="myForm">
 
         <div class="form-group" >
             <label for="device">Select Device:</label>
+
             <select class="form-control" id="device" name="device">
+
                 <option value="">Select a Device</option>
                 <option value="200" data-price="1499">#1001 MacBook Pro (13-inch, 2019, Two Thunderbolt 3 ports) - $200</option>
                 <option value="230" data-price="2399">#1002 MacBook Pro (16-inch, 2019) - $230</option>
@@ -17,7 +19,7 @@
                 <option value="350" data-price="1199">#1006 MacBook Air (M2, 2022) Mac14,2 - $350</option>
                 
                 <option value="10.00" data-price="10.00">IPhone 6s/6s+ SMD Ramdisk Hello bypass with Signal - $10</option>
-                <option value="15" data-price="15">IPhone 7/7+ SMD Ramdisk Hello bypass with Signal - $15 </option>
+                <option value="15" data-price="15" >IPhone 7/7+ SMD Ramdisk Hello bypass with Signal - $15 </option>
                 <option value="25" data-price="25">IPhone 8/8+ SMD Ramdisk Hello bypass with Signal - $25</option>
                 <option value="32" data-price="32">IPhone X SMD Ramdisk Hello bypass with Signal - $32</option>
 
@@ -49,7 +51,7 @@
                  <option value="350" data-price="350">IPad 10.9 10th Gen (Wi-fi only) SN OFF- $350</option>
                  <option value="370" data-price="350">IPad Pro (12.9 inch ,Wi-fi only) SN OFF- $370</option>
                  <option value="365" data-price="350">IPad Pro (11 inch ,Wi-fi only) SN OFF- $365</option>
-                 
+
                  
 
 
@@ -58,7 +60,9 @@
         </div>
  <br>
         <!-- Add a div to display the order result message -->
-        <div id="orderResultMessage" style="display: none;"></div>
+        <div id="orderResultMessage" style="display: none;" >
+            <input type="text" name="selectedService" value="" id="selectedService" readonly>
+        </div>
 
 <br>
         <!-- IMEI Number and Processing Time fields -->
@@ -77,7 +81,8 @@
             </div>
         </div>
         <br>
-        <button type="submit" class="btn btn-success">Submit Order</button>
+        <button type="submit" onclick="getSelectedOptionText()" class="btn btn-success">Submit Order</button>
+        
     </form>
 </div>
 
@@ -92,16 +97,109 @@
     const deviceSelect = document.getElementById('device');
     const imeiProcessingFields = document.getElementById('imeiProcessingFields');
     const orderResultMessage = document.getElementById('orderResultMessage');
+    const formElement = document.getElementById('myForm'); 
+    const inputField = document.getElementById('selectedService');
 
-    deviceSelect.addEventListener('change', function () {
-        if (deviceSelect.value === '') {
-            imeiProcessingFields.style.display = 'none';
-        } else {
-            imeiProcessingFields.style.display = 'block';
-        }
+    const deviceTextMap = {
+    '200': '#1001 MacBook Pro (13-inch, 2019, Two Thunderbolt 3 ports)',
+    '230': '#1002 MacBook Pro (16-inch, 2019)',
+    '260': '$1003 iMac (24-inch, M1, 2021) iMac21,1/iMac21,2 (two/four ports)',
+    '288': '#1004 MacBook Pro (13-inch, M2, 2022) Mac14,7',
+    '300': '#1005 MacBook Air (M1, 2020) MacBookAir10,1',
+    '350': '#1006 MacBook Air (M2, 2022) Mac14,2',
+    '10.00': 'IPhone 6s/6s+ SMD Ramdisk Hello bypass with Signal',
+    '15': 'IPhone 7/7+ SMD Ramdisk Hello bypass with Signal',
+    '25': 'IPhone 8/8+ SMD Ramdisk Hello bypass with Signal',
+    '32': 'IPhone X SMD Ramdisk Hello bypass with Signal',
+    '12': 'IPhone 6s/6s+ IRemoval Pro Hello with Signal (windows)',
+    '18': 'IPhone 7/7+ IRemoval Pro Hello with Signal (windows)',
+    '28': 'IPhone 8/8+ IRemoval Pro Hello with Signal (windows)',
+    '35': 'IPhone X IRemoval Pro Hello with Signal (windows)',
+    '3': 'A9 LPro Passcode or Hello no signal bypass',
+    '4': 'A10 LPro Passcode or Hello no signal bypass',
+    '5': 'A11 LPro Passcode or Hello no signal bypass',
+    '90': 'IPhone XR Lost / Clean mode Plist Service',
+    '120': 'IPhone 11 Lost / Clean mode Plist Service',
+    '140': 'IPhone 11 Pro Lost / Clean mode Plist Service',
+    '150': 'IPhone 11 Pro Max Lost / Clean mode Plist Service',
+    '110': 'IPhone 12 mini Lost / Clean mode Plist Service',
+    '130': 'IPhone 12 Lost / Clean mode Plist Service',
+    '170': 'IPhone 12 Pro Lost / Clean mode Plist Service',
+    '185': 'IPhone 12 Pro Max Lost / Clean mode Plist Service',
+    '140': 'IPhone 13 mini Lost / Clean mode Plist Service',
+    '200': 'IPhone 13 Lost / Clean mode Plist Service',
+    '230': 'IPhone 13 Pro Lost / Clean mode Plist Service',
+    '250': 'IPhone 13 Pro Max Lost / Clean mode Plist Service',
+    '280': 'IPhone 14 Lost / Clean mode Plist Service',
+    '295': 'IPhone 14 PlusLost / Clean mode Plist Service',
+    '310': 'IPhone 14 Pro Lost / Clean mode Plist Service',
+    '350': 'IPhone 14 Pro Max Lost / Clean mode Plist Service',
+    '350': 'IPad 10.9 10th Gen (Wi-fi only) SN OF',
+    '370': 'IPad Pro (12.9 inch ,Wi-fi only) SN OF',
+    '365': 'IPad Pro (11 inch ,Wi-fi only) SN OF',
+};
+
+        let selectedDevice;
+
+        deviceSelect.addEventListener('change', function () {
+            selectedDevice = deviceSelect.value;
+
+            if (selectedDevice === '') {
+                imeiProcessingFields.style.display = 'none';
+                orderResultMessage.textContent = ''; // Clear the content if no device selected
+            } else {
+                imeiProcessingFields.style.display = 'block';
+                const selectedDeviceText = deviceTextMap[selectedDevice];
+
+                //orderResultMessage.style.display="block"
+               // orderResultMessage.textContent = selectedDeviceText;
+                 // Set the value of the input field
+                inputField.value = selectedDeviceText;
+                console.log(selectedDeviceText)
+            }
+
+
     });
 
-   
+    
+
+  /* function getSelectedOptionText() {
+    
+
+        
+            // Get the select element
+            var selectElement = document.getElementById('device');
+
+            // Get the selected option
+            var selectedOption = selectElement.options[selectElement.selectedIndex];
+
+            // Get the text of the selected option
+            var selectedText = selectedOption.text;
+
+            // Remove the unwanted part (e.g., '- $12')
+            selectedText = selectedText.replace(/ - \$\d+$/, '');
+
+            // Log or use the selected text as needed
+            console.log(selectedText);
+            // You can now use the selectedText variable as needed
+
+             // Send the selected text to the server
+             axios.post('/orders', { selectedText }, { headers: { 'Content-Type': 'application/json' } })
+                .then(response => {
+                    console.log('Server response:', response.data);
+                      // Manually submit the form
+                    //document.getElementById('myForm').submit();
+                })
+                .catch(error => {
+                    console.error('Error sending data to the server:', error);
+                });
+
+
+        } */
+
+    
+
+
        
 </script>
 

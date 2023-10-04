@@ -1,12 +1,47 @@
 <%- include("partials/header-user"); -%>
 
-<div class="container mt-5 text-center ">
-    <h2 class="text-success">Order successfully placed </h2>
-    <p>your Order was successfully placed  <a href="/view-orders">view order status </a> Your balance is $ <%= balance %>  .</p>
-    <!-- You can add links or buttons to navigate to other pages as needed -->
+
+
+
+
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <!-- Add a success message with an icon -->
+            <div class="alert alert-success text-center" role="alert">
+                <h4 class="alert-heading"><i class="fas fa-check-circle"></i> Order Was Successfully Placed</h4>
+                <p>Your order was successfully placed. <a href="/view-orders">View Order Status</a>
+                   
+                </p>
+            </div>
+            <!-- Display additional payment details -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Order Details</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Imei:</strong> 
+                            <%= lastImei.imeiNumber %> </li>
+                      <li class="list-group-item"><strong>Service:</strong>  <%= lastImei.service %> </li>
+                        <li class="list-group-item"><strong>Price:</strong>  $<%= lastImei.price %> </li>
+                        
+                        <li class="list-group-item"><strong>Status:</strong>  <%= lastImei.status %> </li>
+                        <li class="list-group-item">  
+                            <strong>New Balance:</strong>  $<span id="balance"><%= balance %></span>
+                         </li>
+                      
+
+                        
+                    </ul>
+                </div>
+            </div>
+            <!-- Add a button to return to the homepage or a relevant page -->
+            <div class="text-center mt-4">
+                <a href="/orders" class="btn btn-primary">Place a new order</a>
+            </div>
+        </div>
+    </div>
 </div>
-
-
 
 
 <br><br><br><br><br><br><br><br><br><br><br><br><b><br></b>

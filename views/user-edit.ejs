@@ -64,6 +64,48 @@
             <input type="number" id="cancelled" name="cancelled" value="<%= user.cancelled %>" class="form-control">
         </div>
 
+
+
+        <div class="container">
+            <h1 class="mt-4 mb-3">IMEI Orders</h1>
+
+           
+    
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th scope="col">User</th>
+                            <th scope="col">IMEI Number</th>
+                            <th scope="col">Service</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Order Status</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% imeiOrders.forEach(imeiOrder => { %>
+                            <tr>
+                                <td><%= user.name %></td>
+                                <td><%= imeiOrder.imeiNumber %></td>
+                                <td><%=  imeiOrder.service %></td>
+                                <td> $<%= imeiOrder.price  %></td>
+                                <td><%= imeiOrder.status %></td>
+                                <td>
+                                   
+                                    <a href="/users/<%= user._id %>/imeiOrder-delete/<%= imeiOrder._id %>" class="btn btn-danger">Delete</a>
+
+
+
+
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
         <br>
         <!-- Add more form fields for other user information as needed -->
         <button type="submit" class="btn btn-success">Update</button>
@@ -72,3 +114,5 @@
 
 <br><br><br>
 <%- include("partials/footer"); -%>
+
+

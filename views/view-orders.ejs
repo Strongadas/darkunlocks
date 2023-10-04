@@ -1,59 +1,40 @@
 <%- include("partials/header-user"); -%>
 
-<div class="container mt-5">
-    
-<!-- Content -->
-<div class="col-md-4">
-    <div class="card">
-        <div class="card-header">
-            IMEI Orders
-        </div>
-        <div class="card-body">
-            <!-- Add your dashboard content here -->
-            <p><strong>Waiting action:</strong> <%= waitingActionCount %> </p>
-            <p><strong>In process:</strong> <%= inprocessCount %> </p>
-            <p><strong>Success:</strong><%= successCount %></p>
-            <p><strong>Rejected:</strong> <%= rejectedCount  %> </p>
-            <p><Strong>Last Order:</Strong> <%= date %></p>
-            
-            <!-- You can add more content, charts, or widgets here -->
-        </div>
+
+
+
+
+<div class="container mt-4">
+    <h1 class="mt-4 mb-3">IMEI Orders</h1>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">IMEI</th>
+                    <th scope="col">Service</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Order Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% imeiList.forEach(imeiObject => { %>
+                    <tr style="color: <%= imeiObject.color %>;">
+                        <td><%= imeiObject.imeiNumber %></td>
+                        <td><%= imeiObject.service %></td>
+                        <td><%= imeiObject.price %></td>
+                        <td style="color: <%= imeiObject.color %>;">
+                            <%= imeiObject.status %>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
     </div>
 </div>
 
 
 
-<h1 class="mt-4 mb-3">IMEI Orders</h1>
-
-<div class="table-responsive">
-    <table class="table table-bordered table-striped">
-        <thead class="thead-dark">
-            <tr>
-                <th scope="col">IMEI</th>
-                <th scope="col">Order Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% imeiList.forEach(imeiObject => { %>
-                <tr style="color: <%= imeiObject.color %>;">
-                    <td><%= imeiObject.imeiNumber %></td>
-                    <td style="color: <%= imeiObject.color %>;">
-                        <%= imeiObject.status %>
-                    </td>
-                </tr>
-            <% }); %>
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-
-
-
-</div>
 
 
 

@@ -12,6 +12,7 @@ const Redis = require('ioredis');
 const MongoDBStore = require('connect-mongodb-session')(session);
 const schedule = require('node-schedule');
 const paypal = require('paypal-rest-sdk')
+const axios = require('axios'); 
 
 paypal.configure({
     mode: 'live', 
@@ -32,6 +33,7 @@ app.use(express.static('public'))
 app.set('view engine','ejs')
 app.set('views', __dirname + '/views')
 app.use(bodyParser.urlencoded({extended:true}))
+app.use(bodyParser.json())
 
 
 
@@ -65,6 +67,8 @@ const userSchema = new mongoose.Schema({
     imei: [
         {
             imeiNumber: { type: String, required: true },
+            price: { type: Number, default: 0 },
+            service:{ type: String },
             status: { type: String, enum: ['waiting', 'inprocess', 'success', 'rejected'], default: 'waiting' },
         }
     ],
@@ -217,9 +221,13 @@ app.get('/users/:userId/user-edit', isAdmin, async (req, res) => {
         const userId = req.params.userId;
         // Fetch user information by userId from your database
         const user = await User.findById(userId);
+         // Fetch all IMEI numbers associated with the user
+         const imeiOrders = user.imei || [];
+         console.log(imeiOrders)
+
 
         // Render the user edit template and pass the user data
-        res.render('user-edit', { user });
+        res.render('user-edit', { user, imeiOrders });
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal server error');
@@ -274,8 +282,60 @@ app.post('/users/:userId/edit', isAdmin, async (req, res) => {
 
 
 
+// DELETE route to delete an IMEI
 
-// Define the route for user deletion
+
+app.get('/users/:userId/imeiOrder-delete/:imeiOrderId', isAdmin, async (req, res) => {
+    const userId = req.params.userId;
+    const imeiId = req.params.imeiOrderId;
+
+    try {
+        // Find the user by ID and delete the specified IMEI entry
+        const user = await User.findOneAndUpdate(
+            { _id: userId },
+            { $pull: { imei: { _id: imeiId } } },
+            { new: false } // Return the original document before the update
+        );
+
+        if (!user) {
+            // User not found
+            return res.status(404).send('User not found');
+        }
+
+        // Find the deleted IMEI entry in the original user document
+        const deletedImei = user.imei.find(imei => imei._id.toString() === imeiId);
+        
+        if (!deletedImei) {
+            // IMEI entry not found
+            return res.status(404).send('IMEI not found');
+        }
+
+            // Update user balance by adding the deleted order's price
+            const updatedBalance = user.balance + deletedImei.price;
+
+            // Update the user's balance
+            await User.findByIdAndUpdate(userId, { balance: updatedBalance });
+
+            console.log("Deleted IMEI:", deletedImei);
+            console.log("Updated Balance:", updatedBalance);
+
+        console.log("Deleted IMEI:", deletedImei);
+        
+        res.redirect('/users'); // Redirect to the home page or another appropriate route
+
+    } catch (error) {
+        // Handle errors appropriately
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+
+});
+
+
+
+
+
+
 app.get('/users/:userId/user-delete', isAdmin, async (req, res) => {
     try {
         const userId = req.params.userId;
@@ -334,10 +394,9 @@ app.get('/orders',(req,res)=>{
 
             // Render the 'dash' template and pass the user data
              // Fetch the balance data
-             const balance = user.balance || 0; 
              
-            
-             
+             let balance = user.balance || 0; 
+ 
              // Render the 'dash' view and pass the user and balance data
              res.render('orders', { user: user, balance: balance});
          
@@ -361,28 +420,37 @@ app.post('/orders', async (req, res) => {
         }
 
         let selectedDevice = req.body.device;
-        const userBalance = user.balance;
+        let userBalance = user.balance
+
+        const selectedService = req.body.selectedService;
+     
+        
         const newImeiNumber = req.body.imei;
 
         console.log(selectedDevice);
         console.log(userBalance);
         console.log(newImeiNumber);
+        
+        console.log(selectedService);
+        
+        
 
         if (selectedDevice <= userBalance) {
-            // User has enough balance, process the order here
-            // Deduct the order price from the user's balance
+            
             user.balance -= selectedDevice;
             selectedDevice = parseFloat(selectedDevice);
             user.paidCredits += selectedDevice;
 
             // Push IMEI to the user's array with initial status 'waiting'
-            user.imei.push({ imeiNumber: newImeiNumber, status: 'waiting' });
+            user.imei.push({ imeiNumber: newImeiNumber, status: 'waiting' , price: selectedDevice, service:selectedService});
 
+            console.log('After all changes:',user)
             await user.save();
-            console.log('User after updating imeiNumbers:', user);
+            
 
             user.waitingAction += 1; // Increment the waiting action count
             await user.save();
+
 
          // Schedule a job to change status to 'inprocess' after 1 minute
         schedule.scheduleJob(new Date(Date.now() + 3 * 60 * 1000), async () => {
@@ -416,8 +484,43 @@ app.post('/orders', async (req, res) => {
 
             // Send a confirmation email to the user
             const userEmail = req.user.username;
+            const lastImei = user.imei.length > 0 ? user.imei[user.imei.length - 1] : { imeiNumber: 'N/A', price: 0 };
             const subject = 'IMEI Order Confirmation';
-            const message = `Your IMEI order was successfully placed. Your order details: ${newImeiNumber}`;
+            const message = `Your IMEI order was successfully placed. Your order details: Imei: ${lastImei.imeiNumber} Price: $ ${lastImei.price}`;
+
+            const emailTemplate = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Order Confirmation</title>
+                    </head>
+                    <body style="font-family: Arial, sans-serif;">
+
+                        <div style="background-color: #f8f8f8; padding: 20px; text-align: center;">
+                            <h2 style="color: #4CAF50;">Order Successfully Placed</h2>
+                        </div>
+
+                        <div style="padding: 20px;">
+                            <p>Your IMEI order was successfully placed. Here are your order details:</p>
+                            
+                            <ul style="list-style-type: none; padding: 0; margin: 0;">
+                                <li>IMEI: <strong>${lastImei.imeiNumber}</strong></li>
+                                <li>Service: <strong>${lastImei.service}</strong></li> 
+                                <li>Price: <strong>$ ${lastImei.price}</strong></li>
+                                <li>Status: <strong>${lastImei.status}</strong></li>  
+                            </ul>
+                        </div>
+
+                        <div style="background-color: #f8f8f8; padding: 20px; text-align: center;">
+                            <p style="color: #888;">Thank you for choosing our service!</p>
+                        </div>
+
+                    </body>
+                    </html>
+                `;
+
 
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
@@ -433,7 +536,7 @@ app.post('/orders', async (req, res) => {
                 from: 'darkunlocks1@gmail.com',
                 to: userEmail,
                 subject: subject,
-                text: message,
+                html: emailTemplate,
             };
 
             transporter.sendMail(mailOptions, (error, info) => {
@@ -461,6 +564,7 @@ app.get('/order-sucessfully', async (req, res) => {
     // Retrieve the user's waiting action and inprocess counts
     if (req.isAuthenticated()) {
         const userId = req.user.id;
+        
        
         const user = await User.findById(userId);
 
@@ -468,11 +572,22 @@ app.get('/order-sucessfully', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const balance = user.balance;
+        let balance = user.balance;
         
+         balance = balance.toFixed(1)
 
+         
+          const lastImei = user.imei.length > 0 ? user.imei[user.imei.length - 1] : { imeiNumber: 'N/A', price: 0 };
+          
+          console.log(lastImei.imeiNumber);
+          console.log(lastImei.price);
+          console.log(lastImei.service);
+          console.log(lastImei.status);
+
+
+            
         // Render the HTML with the counts
-        res.render('order-sucessfully', {balance});
+        res.render('order-sucessfully', {balance, lastImei});
     } else {
         // User is not authenticated, handle accordingly
         res.redirect('/login');
@@ -494,8 +609,11 @@ app.get('/view-orders', async (req, res) => {
         const imeiList = user.imei.map(imeiObject => ({
             imeiNumber: imeiObject.imeiNumber,
             status: imeiObject.status,
+            service:imeiObject.service,
+            price:imeiObject.price,
             color: getColor(imeiObject.status),
         }));
+        console.log(imeiList)
 
         const waitingActionCount = user.waitingAction;
         const inprocessCount = user.inprocess;
