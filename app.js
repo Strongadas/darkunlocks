@@ -613,7 +613,7 @@ app.get('/view-orders', async (req, res) => {
             price:imeiObject.price,
             color: getColor(imeiObject.status),
         }));
-        console.log(imeiList)
+       
 
         const waitingActionCount = user.waitingAction;
         const inprocessCount = user.inprocess;
