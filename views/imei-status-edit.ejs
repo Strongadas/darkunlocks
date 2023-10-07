@@ -1,0 +1,37 @@
+<%- include("partials/header-admin"); -%>
+<div class="container mt-5">
+
+ <form action="/editedimei/<%= userId %>" method="post">
+
+    
+<div class="form-group">
+    <label for="balance">IMEI Number:</label>
+ <input type="text" id="detectedImei" name="detectedImei" value=" <%= detectedImei.imeiNumber %>" class="form-control" >
+<br>
+<div class="form-group">
+    <label for="balance">IMEI Status:</label>
+ <input type="text" id="detectedStatus" name="detectedStatus" value=" <%= detectedImei.status %>" class="form-control" >
+</div>
+<br>
+<div class="form-group">
+    <label for="balance">Price:</label>
+ <input type="text" id="detectedStatus" name="detectedPrice" value=" <%= detectedImei.price %>" class="form-control" >
+</div>
+<div class="form-group">
+    <label for="balance">Service:</label>
+ <input type="text" id="detectedStatus" name="detectedService" value=" <%= detectedImei.service %>" class="form-control" >
+</div>
+<br>
+<button type="submit" class="btn btn-success">Update</button>
+<button type="reset" class="btn btn-danger">Cancel</button>
+
+</form>
+</div>
+
+
+
+
+
+
+
+<%- include("partials/footer"); -%>

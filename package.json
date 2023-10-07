@@ -35,6 +35,7 @@
     "passport-local-mongoose": "^8.0.0",
     "path": "^0.12.7",
     "paypal-rest-sdk": "^1.8.1",
+    "binance-pay-sdk": "github:binance/binance-pay-sdk",
     "strip": "^3.0.0",
     "stripe": "^13.7.0"
   }

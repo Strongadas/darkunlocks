@@ -13,6 +13,8 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const schedule = require('node-schedule');
 const paypal = require('paypal-rest-sdk')
 const axios = require('axios'); 
+//const Binance = require('node-binance-api');
+//const BinancePay = require('binance-pay-sdk');
 
 paypal.configure({
     mode: 'live', 
@@ -27,6 +29,8 @@ const app = express()
 
 mongoose.connect(process.env.DATABASE_URL)
 mongoose.set('strictQuery', false);
+const apiKey = "tsi8tjhvxoxtjwwp2js72bkfnabsgmpfzbefhxyfwimiitbfbae9nu03k3gn016u"
+const apiSecret = "wimuvwgiqnyucjl8e9e3rjmihivtmwkenn7voplsbdbddd1pdp12ldgwfenbdsqd";
 
 
 app.use(express.static('public'))
@@ -36,7 +40,7 @@ app.use(bodyParser.urlencoded({extended:true}))
 app.use(bodyParser.json())
 
 
-
+//const binancePay = new BinancePay(apiKey, apiSecret);
 
 app.use(session({
     secret:process.env.SECRET,
@@ -141,6 +145,8 @@ function getColor(status) {
             return 'orange';
         case 'rejected':
             return 'red';
+        case 'success':
+            return 'green';
         default:
             return 'black'; // Default color or handle other cases
     }
@@ -223,7 +229,7 @@ app.get('/users/:userId/user-edit', isAdmin, async (req, res) => {
         const user = await User.findById(userId);
          // Fetch all IMEI numbers associated with the user
          const imeiOrders = user.imei || [];
-         console.log(imeiOrders)
+        
 
 
         // Render the user edit template and pass the user data
@@ -331,9 +337,74 @@ app.get('/users/:userId/imeiOrder-delete/:imeiOrderId', isAdmin, async (req, res
 
 });
 
+//edit imei 
+app.get('/users/:userId/imeiOrder-edit/:imeiOrderId', isAdmin, async (req, res) => {
+    const userId = req.params.userId;
+    const imeiId = req.params.imeiOrderId;
+
+    try {
+        // Find the user by ID and delete the specified IMEI entry
+        const user = await User.findOneAndUpdate(
+            { _id: userId },
+            { $pull: { imei: { _id: imeiId } } },
+            { new: false } // Return the original document before the update
+        );
+
+        if (!user) {
+            // User not found
+            return res.status(404).send('User not found');
+        }
+        
+         const imeiOrders = user.imei || [];
+       
+        // Find the deleted IMEI entry in the original user document
+        const detectedImei = user.imei.find(imei => imei._id.toString() === imeiId);
+        
+        if (!detectedImei) {
+            // IMEI entry not found
+            return res.status(404).send('IMEI not found');
+        }
 
 
+        console.log("edited IMEI:", detectedImei);
+        res.render('imei-status-edit',{user , detectedImei,userId: userId })
+       
+    } catch (error) {
+        // Handle errors appropriately
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
 
+});
+
+app.post('/editedimei/:userId', isAdmin, async (req, res) => {
+    try {
+        const { detectedImei, detectedStatus,detectedService,detectedPrice } = req.body;
+        const userId = req.params.userId;
+
+        console.log(userId)
+        const user = await User.findById(userId);
+        
+
+        // Save the new IMEI to the user's array
+        user.imei.push({
+            imeiNumber: detectedImei,
+            status:detectedStatus,
+            price:detectedPrice,
+            service:detectedService
+            
+        });
+
+        // Save the updated user to the database
+        await user.save();
+        
+
+        res.redirect('/users'); // Redirect to a success page
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal Server Error');
+    }
+});
 
 
 app.get('/users/:userId/user-delete', isAdmin, async (req, res) => {
@@ -730,11 +801,13 @@ function ensureAuthenticated(req, res, next) {
     // Redirect unauthenticated users to the login page or any other appropriate route
     res.redirect('/login');
 }
+let amount ;
+let totalAmount = {}
 
 
 //Post methoods
-let amount ;
-let totalAmount = {}
+  
+
 app.post('/pay', ensureAuthenticated, (req, res) => {
     // Parse the amount from the request body
      amount = parseFloat(req.body.amount);

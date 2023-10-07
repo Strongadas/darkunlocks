@@ -1,11 +1,10 @@
 <%- include("partials/header-user"); -%>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9149809198719246"
-     crossorigin="anonymous"></script>
+     crossorigin="anonymous">
+    </script>
+
      
-  
-
-
-     <div class="container mt-5">
+     <div class="container mt-5 container-pay">
         <h1 class="paypal-heading">
             <img src="/images/paypal2.png" alt="paypal" width="150" height="90" class="paypal-logo">
             Auto    <span id="pay"> Payment </span>
@@ -18,7 +17,7 @@
             <input type="hidden" name="item_name" value="Payment">
             
             <div class="form-group">
-                <label for="amount">Amount:</label>
+                <label for="amount">Amount $:</label>
                 <input type="text" class="form-control" id="amount" name="amount" placeholder="Enter the amount">       
             </div>
             <br>
@@ -26,12 +25,43 @@
         </form>
     </div>
 
+            <!--biannec auto pay-->
+
+    <div class="container mt-5 container-bin">
+        <h1 class="binance-heading">
+          <img src="/images/bi.png" alt="binance" width="180" height="60" class="paypal-logo ">
+           Auto <span id="bin"> Payment </span>
+        </h1>
+    
+        <form action="/createOrder" method="post">
+        
+    
+          <div class="form-group">
+            <label for="amount">Amount $:</label>
+            <input type="text" class="form-control" id="amount" name="amount" placeholder="Enter the amount">
+          </div>
+          <br>
+          <button type="submit" id="btn-binance"><img src="/images/binance-logo.png" alt="binance" width="170" height="40"></button>
+        </form>
+      </div>
+
    
 
 
 
 
-<div class="container mt-5">
+
+
+
+
+
+
+
+
+
+
+
+<div class="container mt-5 container-pay">
     <h1>Manual Payment Details</h1>
     
     <h2>Binance Payment (USDT)</h2>
