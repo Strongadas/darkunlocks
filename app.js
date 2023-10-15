@@ -13,6 +13,7 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const schedule = require('node-schedule');
 const paypal = require('paypal-rest-sdk')
 const axios = require('axios'); 
+const TelegramBot = require('node-telegram-bot-api');
 //const Binance = require('node-binance-api');
 //const BinancePay = require('binance-pay-sdk');
 
@@ -32,6 +33,11 @@ mongoose.set('strictQuery', false);
 const apiKey = "tsi8tjhvxoxtjwwp2js72bkfnabsgmpfzbefhxyfwimiitbfbae9nu03k3gn016u"
 const apiSecret = "wimuvwgiqnyucjl8e9e3rjmihivtmwkenn7voplsbdbddd1pdp12ldgwfenbdsqd";
 
+const token = '6518093800:AAErTtdV6RIN6VVMSNL5sVQis_T5BOpx8oQ';
+const bot = new TelegramBot(token, { polling: true });
+
+// Replace 'YOUR_GROUP_CHAT_ID' with your actual group chat ID
+const groupChatId = '1001822240487';
 
 app.use(express.static('public'))
 app.set('view engine','ejs')
@@ -617,6 +623,10 @@ app.post('/orders', async (req, res) => {
                     console.log('Email notification sent:', info.response);
                 }
             });
+            const orderDetails = 'API TEST';
+            // Send the order details to the group chat
+             bot.sendMessage(groupChatId, `New order:\n\n${orderDetails}`);
+            console.log('sms sent sucessfully')
 
             // Send a success response with the updated balance
             return res.redirect('/order-sucessfully');
@@ -630,6 +640,11 @@ app.post('/orders', async (req, res) => {
     }
 });
 
+// Event listener for incoming messages
+bot.on('message', (msg) => {
+    // Your existing logic for handling messages
+    console.log(msg)
+  });
 
 app.get('/order-sucessfully', async (req, res) => {
     // Retrieve the user's waiting action and inprocess counts
