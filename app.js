@@ -452,6 +452,9 @@ app.get('/',(req,res)=>{
 app.get('/services',(req,res)=>{
     res.render('services')
 })
+app.get('/downloads',(req,res)=>{
+    res.render('downloads')
+})
 app.get('/orders',(req,res)=>{
     if (req.isAuthenticated()) {
 
