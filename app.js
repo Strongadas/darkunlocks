@@ -109,6 +109,14 @@ passport.deserializeUser((id, done) => {
     res.redirect('/dash'); // Redirect to the home page or login page if not an admin
 };
 
+// Define a middleware to check if the user is authenticated
+function ensureAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    // Redirect unauthenticated users to the login page or any other appropriate route
+    res.redirect('/login');
+}
 
 
 // Job to transition from 'waiting' to 'inprocess' every 3 minutes
@@ -158,7 +166,54 @@ function getColor(status) {
 app.locals.getColor = getColor;
 
 
+app.get('/transfer', ensureAuthenticated, async (req, res) => {
+    const user_email = req.user.username
+    const user_balance = req.user.balance
+    console.log(user_email, user_balance)
+    res.render('transfer', { message: null, error: null ,user_balance,user_email});
+       
+});
+app.post('/transfer', async(req,res)=>{
 
+            try{
+
+             const senderUserId = req.body.senderUserId;
+            const recipientEmail = req.body.recipientUser; 
+            const amountToSend = parseInt(req.body.amount);
+
+            console.log(senderUserId, recipientEmail , amountToSend)
+
+            if (!senderUserId || !recipientEmail || isNaN(amountToSend)) {
+                return res.status(400).json({ error: 'Invalid parameters' });
+            }
+
+            const senderUser = await User.findOne({username: senderUserId});
+            const recipientUser = await User.findOne({ username: recipientEmail });
+
+                console.log(senderUser,recipientUser)
+
+            if (!senderUser || !recipientUser) {
+                return res.status(404).json({ error: 'Sender or recipient not found' });
+            } if (senderUser.balance >= amountToSend) {
+                senderUser.balance -= amountToSend;
+                recipientUser.balance += amountToSend;
+
+                await senderUser.save();
+                await recipientUser.save();
+
+                res.render('transfer-sucessfully',{senderUser,recipientUser,amountToSend})
+            } else {
+                return res.status(400).json({ error: 'Insufficient balance for the transfer.' });
+            }
+        } catch (error) {
+            console.error('Error during balance transfer:', error.message);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+
+
+    
+    
+})
 
 // Admin dashboard route
 app.get('/admin', isAdmin, (req, res) => {
@@ -806,14 +861,6 @@ app.get('/credits',(req,res)=>{
 })
 
 
-// Define a middleware to check if the user is authenticated
-function ensureAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    // Redirect unauthenticated users to the login page or any other appropriate route
-    res.redirect('/login');
-}
 let amount ;
 let totalAmount = {}
 

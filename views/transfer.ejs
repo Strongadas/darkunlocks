@@ -1,0 +1,35 @@
+<%- include("partials/header-user"); -%>
+
+
+   <div class="container mt-5">
+    <h1 class="mb-4">Balance Transfer</h1>
+    <p class="mb-4"><strong>Balance:</strong> $<%= user_balance %></p>
+
+    <% if (message) { %>
+        <p style="color: green;"><%= message %></p>
+    <% } else if (error) { %>
+        <p style="color: red;"><%= error %></p>
+    <% } %>
+
+    <form action="/transfer" method="post">
+        <div class="form-group">
+            <label for="senderUserId">Sender User Email:</label>
+            <input type="text" class="form-control" id="senderUserId" name="senderUserId"  value="<%= user_email %>" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="recipientUserId">Recipient Email</label>
+            <input type="text" class="form-control" id="recipientUser" name="recipientUser" required>
+        </div>
+
+        <div class="form-group">
+            <label for="amount">Amount $:</label>
+            <input type="number" class="form-control" id="amount" name="amount" required>
+        </div>
+
+        <br>
+        <button type="submit" class="btn btn-success">Transfer</button>
+    </form>
+</div>
+
+    <%- include("partials/footer"); -%>

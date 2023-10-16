@@ -1,0 +1,41 @@
+<%- include("partials/header-user"); -%>
+
+
+<div class="container mt-5">
+    <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading text-center">Balance Transfer Successful!</h4>
+        <p class="text-center">Your balance transfer was successful. You can check your updated balance now.</p>
+    </div>
+
+    
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Transfer Details</h5>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>Sender:</strong> 
+                    <%= senderUser.username %> </li>
+              <li class="list-group-item"><strong>Recipient</strong>  <%= recipientUser.username %> </li>
+              <li class="list-group-item"><strong>Amount:</strong>  $<%= amountToSend %> </li>
+                <li class="list-group-item">  
+                    <strong>New Balance:</strong>  $<span id="balance"><%= senderUser.balance %></span>
+                 </li>
+                 
+           
+            </ul>
+        </div>
+    </div>
+    <div class="text-center mt-4">
+        <a href="/dash" class="btn btn-primary">Back to Home Page </a>
+    </div>
+
+    </div>
+
+  
+
+
+
+
+
+
+<%- include("partials/footer"); -%>
