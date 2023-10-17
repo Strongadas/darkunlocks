@@ -17,7 +17,7 @@
                 <input type="checkbox" class="form-check-input" id="rememberMe">
                 <label class="form-check-label" for="rememberMe">Remember me</label>
             </div>
-            <button type="submit" class="btn btn-primary mx-auto">Sign in</button>
+            <button type="submit" class="btn btn-primary mx-auto" id="btn-login">Sign in</button>
         </form>
         <div class="register-link">
             <p>Don't have an account? <a href="/#sign-up">Register here</a></p>
@@ -27,3 +27,10 @@
 
 
 <%- include("partials/footer"); -%>
+
+<script>
+    const btn = document.querySelector('#btn-login')
+    btn.addEventListener('click',()=>{
+        btn.innerHTML = "Please Wait!"
+    })
+</script>
