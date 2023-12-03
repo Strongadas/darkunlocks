@@ -1,36 +1,83 @@
-<%- include("partials/header"); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In</title>
+  <link rel="stylesheet" href="/css/login.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-<div class="container mt-5">
-    <div class="login-container">
-       
-        <h2 class="login-title">Login</h2>
-        <form action="/login" method="post">
-            <div class="mb-3">
-                <label for="email" class="form-label">Email address</label>
-                <input type="email"  name="username" class="form-control" id="email" placeholder="Enter your email">
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" placeholder="Password" name="password">
-            </div>
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="rememberMe">
-                <label class="form-check-label" for="rememberMe">Remember me</label>
-            </div>
-            <button type="submit" class="btn btn-primary mx-auto" id="btn-login">Sign in</button>
-        </form>
-        <div class="register-link">
-            <p>Don't have an account? <a href="/#sign-up">Register here</a></p>
+</head>
+<body>
+
+    
+  <div class="container">
+    
+    <form class="sign-in-form" id="myForm" action="/login" method="post">
+        <div class="logo-container">
+            <img src="/images/logo.png" alt="" width="40">
+        </div>
+
+        <h2 >Dark Unlocks </h2>
+        <h3>Sign In</h3>
+      <div class="input-group">
+        <label for="username">Email</label>
+        <input type="email" id="username" name="username" placeholder="Enter your username" required>
+      </div>
+     
+      <div class="input-group">
+        <label for="password">Password</label>
+        <div class="password-input">
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            <span class="toggle-password" onclick="togglePassword()"><i class="fas fa-eye"></i>
+            </span>
         </div>
     </div>
-</div>
+    <% if (errorMessage) { %>
+      <p style="color: red;text-align: center;"><i class="fas fa-exclamation-triangle"></i>
+        <%= errorMessage %> !</p>
+  <% } %>
+      <div class="additional-options">
+        <div class="forgot-password">
+          <a href="#" class="forgot-password-link">Forgot password?</a>
+        </div>
+        
+      </div>
+    <div>
+    
+    </div>
+      <button type="submit" id="btn">Sign In</button>
 
+      <div class="existing-account">
+        <p>Need an account? <a href="/register" class="sign-in-link">Register here</a></p>
 
-<%- include("partials/footer"); -%>
+      </div>
+    </form>
+  </div>
 
-<script>
-    const btn = document.querySelector('#btn-login')
-    btn.addEventListener('click',()=>{
-        btn.innerHTML = "Please Wait!"
-    })
+  <script>
+    const name = document.getElementById('name')
+    const btn = document.getElementById('btn')
+
+    function togglePassword() {
+        var passwordField = document.getElementById("password");
+        var toggleButton = document.querySelector(".toggle-password");
+        
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
+
+        } else {
+            passwordField.type = "password";
+            toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
+        }
+    }
+   
+
+btn.addEventListener('click', ()=>{
+  btn.innerHTML = "please wait!"
+})
+
 </script>
+</body>
+</html>

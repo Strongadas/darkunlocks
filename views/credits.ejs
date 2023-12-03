@@ -1,104 +1,109 @@
 <%- include("partials/header-user"); -%>
+
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9149809198719246"
      crossorigin="anonymous">
     </script>
 
-     
-     <div class="container mt-5 ">
-        <h1 class="paypal-heading">
-            <img src="/images/paypal2.png" alt="paypal" width="150" height="90" class="paypal-logo">
-            Auto    <span id="pay"> Payment </span>
-        </h1>
-        
-        
-        <form action="/pay" method="post">
-            <input type="hidden" name="cmd" value="_xclick">
-            <input type="hidden" name="business" value="strongadas009@gmail.com"> <!-- Your PayPal email -->
-            <input type="hidden" name="item_name" value="Payment">
-            
-            <div class="form-group">
-                <label for="amount">Amount $:</label>
-                <input type="text" class="form-control" id="amount" name="amount" placeholder="Enter the amount">       
+<center>
+    <div class="containera">
+        <div id="paymentForm" >
+            <div class="title">
+                <h4>Select a <span style="color: #6064b6">Payment</span> method</h4>
             </div>
-            <br>
-            <button type="submit" id="btn-paypal"><img src="/images/paypalbtn.jpeg" alt="paypal"></button>
-        </form>
+            
+    
+            <form  method="post">
+                <label for="amount">Amount to Pay:</label>
+                 <input type="text" class="form-control" id="amount" name="amount">
+    
+                <input type="radio" name="payment" id="visa" class="radio">
+                <input type="radio" name="payment" id="mastercard" class="radio">
+                <input type="radio" name="payment" id="paypal" class="radio">
+                <input type="radio" name="payment" id="AMEX" class="radio">
+                
+                <div class="category">
+                    <label for="visa" class="visaMethod">
+                        <div class="imgName">
+                            <div class="imgContainer visa">
+                                <img src="/images/visa.png" alt="">
+                            </div>
+                            <span class="name">Credit / Debit Card</span>
+                        </div>
+                        <span class="check"><i class="fa-solid fa-circle-check" style="color: #6064b6;"></i></span>
+                    </label>
+                    <label for="mastercard" class="mastercardMethod">
+                        <div class="imgName">
+                            <div class="imgContainer mastercard">
+                                <img src="/images/skrill.png" alt="">
+                            </div>
+                            <span class="name">Skrill</span>
+                        </div>
+                        <span class="check"><i class="fa-solid fa-circle-check" style="color: #6064b6;"></i></span>
+                    </label>
+    
+                    <label for="paypal" class="paypalMethod">
+                        <div class="imgName">
+                            <div class="imgContainer paypal">
+                                <img src="https://i.ibb.co/KVF3mr1/paypal.png" alt="">
+                            </div>
+                            <span class="name">Paypal</span>
+                        </div>
+                        <span class="check"><i class="fa-solid fa-circle-check" style="color: #6064b6;"></i></span>
+                    </label>
+    
+                    <label for="AMEX" class="amexMethod">
+                        <div class="imgName">
+                            <div class="imgContainer AMEX">
+                                <img src="/images/btc.png" alt="">
+                            </div>
+                            <span class="name">BitCoin</span>
+                        </div>
+                        <span class="check"><i class="fa-solid fa-circle-check" style="color: #6064b6;"></i></span>
+                    </label>
+                </div>
+                <!-- Additional payment form fields can be added here -->
+                <br>
+                <p class="text-danger" style="display: none;" id="errorPay">Please Choose a Payment Method</p>
+                <button type="submit" class="btn btn-primary">Pay Now</button>
+            </form>
+        </div>
     </div>
+</center>
 
-            <!--biannec auto pay-->
-
-    <div class="container mt-5 ">
-        <h1 class="binance-heading">
-          <img src="/images/bi.png" alt="binance" width="180" height="60" class="paypal-logo ">
-           Auto <span id="bin"> Payment </span>
-        </h1>
-    
-        <form action="/createOrder" method="post">
+<script>
+ const paymentForm = document.getElementById('paymentForm');
+        const amountInput = document.getElementById('amount');
+        const form = paymentForm.querySelector('form');
+        const errorPay = document.getElementById('errorPay')
         
-    
-          <div class="form-group">
-            <label for="amount">Amount $:</label>
-            <input type="text" class="form-control" id="amount" name="amount" placeholder="Enter the amount">
-          </div>
-          <br>
-          <button type="submit" id="btn-binance"><img src="/images/binance-logo.png" alt="binance" width="170" height="40"></button>
-        </form>
-      </div>
+const paymentMethodRadios = document.querySelectorAll('input[type=radio][name=payment]');
+        paymentMethodRadios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        const selectedPaymentMethod = radio.id;
+        console.log(selectedPaymentMethod)
 
-
-
-
-<div class="container mt-5">
-    <h1>Manual Payment Details</h1>
-    
-    <h2>Binance Payment (USDT)</h2>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th scope="col">Field</th>
-                <th scope="col">Details</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>Binance Pay Address </strong></td>
-                <td>517473839</td>
-            </tr>
-            <tr>
-                <td><strong>Telegram id:</strong></td>
-                <td><a href="https://t.me/darkunlocksOwner" target="_blank">Dark Unlocks Owner</a></td>
-            </tr>
-            <tr>
-                <td>Take a screenshot and send to Admin</td>
-                <td><a href="https://t.me/darkunlocksOwner" target="_blank">Dark Unlocks Owner</a></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h2>USDT TRC20 Address</h2>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th scope="col">Field</th>
-                <th scope="col">Details</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>Usdt trc-20 address  </strong></td>
-                <td>TBRWs7UeEnB76A2xV3ZNrsv43ruE5XQsCA</td>
-            </tr>
-            <tr>
-                <td><strong>Telegram id:</strong></td>
-                <td><a href="https://t.me/darkunlocksOwner" target="_blank">Dark Unlocks Owner</a></td>
-            </tr>
-            <tr>
-                <td>Take a screenshot and send to Admin</td>
-                <td><a href="https://t.me/darkunlocksOwner" target="_blank">Dark Unlocks Owner</a></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+        switch (selectedPaymentMethod) {
+            case 'paypal':
+                form.action = '/pay';
+                
+                break;
+            case 'visa':
+                form.action = '/visa';
+                form.method="Post"
+                break;
+            case 'mastercard':
+                form.action = '/mastercard';
+                break;
+            case 'AMEX':
+                form.action = '/AMEX';
+                break;
+            default:
+                  errorPay.style.display = "block";
+                  
+        }
+    });
+});
+</script>
 
 <br><br><br><br><br><br><br><br>
 

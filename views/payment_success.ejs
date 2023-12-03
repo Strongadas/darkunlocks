@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <title>Payment Successful</title>
+</head>
+<body>
+    <!-- Create a Bootstrap container to center the content -->
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <!-- Add a success message with an icon -->
+                <div class="alert alert-success text-center" role="alert">
+                    <h4 class="alert-heading"><i class="fas fa-check-circle"></i> Payment Successful</h4>
+                    <p>Your payment has been successfully processed.</p>
+                </div>
+                <!-- Display additional payment details -->
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Payment Details</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><strong>Payer :</strong> <%= user.name %></li>
+                            <li class="list-group-item"><strong>Payment Amount:</strong> $<%= amount %></li>
+                            
+                            <li class="list-group-item"><strong>Balance:</strong> $<%= user.balance %></li>
+
+                            <!-- Add more payment details here -->
+                        </ul>
+                    </div>
+                </div>
+                <!-- Add a button to return to the homepage or a relevant page -->
+                <div class="text-center mt-4">
+                    <a href="/dash" class="btn btn-primary">Back to Homepage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+   
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

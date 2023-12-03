@@ -1,0 +1,43 @@
+<%- include('partials/header-user') %>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <p class="text-muted text-center mb-4">
+                Please pay your <% due %> with a credit or debit Card
+            </p>
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Click <span class="text-success">Pay with Card </span> to Continue!</h3>
+                    <p class="text-muted text-center mb-4">
+                        Please note that your data will be secured by our system.
+                    </p>
+                    <form action="/visa" method="GET" class="text-center">
+                        <script src="//checkout.stripe.com/v2/checkout.js"
+                                class="stripe-button"
+                                data-key="<%= key %>"
+                                data-amount="<%= amountInCents %> + 00"
+                                data-currency="USD"
+                                data-name="<%= user.name %>"
+                                data-description="Buy Credits"
+                                data-locale="auto">
+                        </script>
+                      
+                    </form>
+                    <br>
+                    <p class="text-muted text-center mb-4">
+                        <span class="text-danger">Debit</span> and <span class="text-warning">Credit</span> Card are <span class="text-success">Supported</span>.
+                    </p>
+                    
+                    <div class="d-flex justify-content-center mt-3">
+                        <img src="https://i.ibb.co/vjQCN4y/Visa-Card.png" alt="" class="mr-3">
+                        <img src="https://i.ibb.co/vdbBkgT/mastercard.jpg" alt="" class="ml-3">
+                    </div> 
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
