@@ -125,3 +125,41 @@ img{
 .check i{
     font-size: 18px;
 }
+
+
+
+
+
+  /* Custom styles for the news slider */
+  #news-slider {
+            background-color: #f8f9fa;
+            padding: 60px 0;
+        }
+
+        .news-card {
+            border: none;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .news-card:hover {
+            transform: scale(1.05);
+        }
+
+        .news-card img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .news-slider-container {
+            overflow: hidden;
+        }
+
+        #news-carousel {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        #news-carousel .carousel-item {
+            min-width: 100%;
+            flex: 0 0 auto;
+        }

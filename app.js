@@ -769,16 +769,12 @@ app.post('/orders', async (req, res) => {
         let selectedDevice = req.body.device;
         let userBalance = user.balance
 
-        const selectedService = req.body.selectedService;
-     
-        
+        const selectedService = req.body.selectedService;   
         const newImeiNumber = req.body.imei;
 
-        console.log(selectedDevice);
-        console.log(userBalance);
-        console.log(newImeiNumber);
-        
-        console.log(selectedService);
+        const BOT_TOKEN = '6518093800:AAErTtdV6RIN6VVMSNL5sVQis_T5BOpx8oQ';
+        const GROUP_CHAT_ID = '-1001822240487';
+        const API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
         
         
 
@@ -807,30 +803,68 @@ app.post('/orders', async (req, res) => {
                 try {
                     await user.save();
                     console.log('IMEI status changed to inprocess:', newImeiNumber);
+                    
                 } catch (error) {
                     console.error('Error saving user after changing status to inprocess:', error);
                 }
             }
         });
 
-        // Schedule a job to change status to 'rejected' after 2 minutes
-        schedule.scheduleJob(new Date(Date.now() + 10 * 60 * 60 * 1000 + 2 * 60 * 1000), async () => {
-            const index = user.imei.findIndex(entry => entry.imeiNumber === newImeiNumber);
-            if (index !== -1 && user.imei[index].status === 'inprocess') {
-                user.imei[index].status = 'rejected';
-                try {
-                    await user.save();
-                    console.log('IMEI status changed to rejected:', newImeiNumber);
-                } catch (error) {
-                    console.error('Error saving user after changing status to rejected:', error);
-                }
-            }
-        });
-
-      
-        
+// Send message to group chat about new device being added
+// Initialize Telegram bot
+const botToken = '6518093800:AAErTtdV6RIN6VVMSNL5sVQis_T5BOpx8oQ';
+const chatId = '-1001822240487';
+const bot = new TelegramBot(botToken);
 
 
+// Function to send Telegram message
+async function sendTelegramMessage(message1) {
+    try {
+        await bot.sendMessage(chatId, message1);
+        console.log('Telegram message sent:', message1);
+    } catch (error) {
+        console.error('Error sending Telegram message:', error);
+        // Handle the error appropriately, e.g., notify admin or log it
+    }
+}
+
+// Schedule a job to change status to 'inprocess' after 2 minutes
+schedule.scheduleJob(new Date(Date.now() + 10 * 60 * 60 * 1000 + 2 * 60 * 1000), async () => {
+    const index = user.imei.findIndex(entry => entry.imeiNumber === newImeiNumber);
+    if (index !== -1 && user.imei[index].status === 'waiting') {
+        user.imei[index].status = 'inprocess';
+        try {
+            await user.save();
+            console.log('IMEI status changed to inprocess:', user.imei[index]);
+
+            // Notify Telegram group about the status change
+            const message1 = `Hello ${req.user.name},IMEI status changed to inprocess: ${user.imei[index]}`;
+            sendTelegramMessage(message);
+        } catch (error) {
+            console.error('Error saving user after changing status to inprocess:', error);
+            // Handle the error appropriately, e.g., notify admin or log it
+        }
+    }
+});
+
+// Schedule a job to change status to 'rejected' after 2 minutes
+schedule.scheduleJob(new Date(Date.now() + 10 * 60 * 60 * 1000 + 4 * 60 * 1000), async () => {
+    const index = user.imei.findIndex(entry => entry.imeiNumber === newImeiNumber);
+    if (index !== -1 && user.imei[index].status === 'inprocess') {
+        user.imei[index].status = 'rejected';
+        try {
+            await user.save();
+            console.log('IMEI status changed to rejected:', user.imei[index]);
+
+            // Notify Telegram group about the status change
+            const message = `IMEI status changed to rejected: ${user.imei[index]}`;
+            sendTelegramMessage(message);
+        } catch (error) {
+            console.error('Error saving user after changing status to rejected:', error);
+            // Handle the error appropriately, e.g., notify admin or log it
+        }
+    }
+});
             // Send a confirmation email to the user
             const userEmail = req.user.username;
             const lastImei = user.imei.length > 0 ? user.imei[user.imei.length - 1] : { imeiNumber: 'N/A', price: 0 };
@@ -895,6 +929,42 @@ app.post('/orders', async (req, res) => {
                     console.log('Email notification sent:', info.response);
                 }
             });
+
+            async function sendMessage(message) {
+                try {
+                  const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      chat_id: GROUP_CHAT_ID,
+                      text: message,
+                    }),
+                  });
+              
+                  const data = await response.json();
+                  console.log(data);
+              
+                  if (!data.ok) {
+                    console.error('Failed to send message:', data.description);
+                  }
+                } catch (error) {
+                  console.error('Error sending message:', error.message);
+                }
+              }
+              
+             // Example usage
+             const maskedImeiNumber = newImeiNumber.slice(0, -8) + "********";
+
+             console.log(`Masked IMEI:   ${maskedImeiNumber}`);
+              
+              // Message with Markdown-style formatting for emphasis
+const messageToSend = `🌟 NEW IMEI ORDER by ${req.user.name}! 🌟\n\n**Order Info** 🚀\n
+SERVICE: ${selectedService}\n\nPRICE: $${selectedDevice}\n\nIMEI: ${maskedImeiNumber}\n\nYou can also view on our website: https://darkunlocks.onrender.com 🌐\n\n 🙏 Thanks Dark Unlocks 🔓`;
+
+
+              sendMessage(messageToSend);    
            
 
             // Send a success response with the updated balance
@@ -1384,7 +1454,65 @@ app.post('/profile', (req, res) => {
   
 
 
+  app.post('/',(req,res)=>{
 
+    const { username, password, name } = req.body;
+
+    const newUser = new User({ username, name });
+
+    const BOT_TOKEN = '6518093800:AAErTtdV6RIN6VVMSNL5sVQis_T5BOpx8oQ';
+    const GROUP_CHAT_ID = '-1001822240487';
+    const API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+    
+    // Use Passport's register method to add the user to the database
+    User.register(newUser, password, (err, user) => {
+        if (err) {
+            console.log(err);
+            res.redirect('/');
+            
+        } else {
+            
+            passport.authenticate('local')(req, res, () => {
+                res.redirect('/dash');
+                console.log(req.body)
+
+
+                async function sendMessage(message) {
+                    try {
+                      const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          chat_id: GROUP_CHAT_ID,
+                          text: message,
+                        }),
+                      });
+                  
+                      const data = await response.json();
+                      console.log(data);
+                  
+                      if (!data.ok) {
+                        console.error('Failed to send message:', data.description);
+                      }
+                    } catch (error) {
+                      console.error('Error sending message:', error.message);
+                    }
+                  }
+                  
+                 // Example usage
+                  
+const messageToSend = `🌟 New Registered User 🌟\n\nHello, ${req.body.name}! Welcome to Dark Unlocks! 🚀 Remember to always deal with our admins only.\nYou can also register on our website: https://darkunlocks.onrender.com 🌐`;
+
+
+                  sendMessage(messageToSend);    
+                
+
+            });
+        }
+    });
+})
 
 app.post('/login', passport.authenticate('local', {
     successRedirect: '/dash', // Redirect to '/dash' upon successful login
@@ -1393,7 +1521,11 @@ app.post('/login', passport.authenticate('local', {
 
     
 }));
+
+
 const PORT = process.env.PORT || 3000
+
+
 app.listen(PORT,(err)=>{
     if(err){
         console.log(err + "while sarting the server")
