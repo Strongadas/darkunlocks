@@ -16,6 +16,7 @@ const axios = require('axios');
 const TelegramBot = require('node-telegram-bot-api');
 const fetch = require('node-fetch');
 const flash = require('connect-flash');
+const multer = require('multer');
 
 paypal.configure({
     mode: 'live', 
@@ -27,6 +28,9 @@ const PUBLISHABLE_KEY = process.env.STRIPE_PUBLISH_KEY
 const SECRET_KEY = process.env.STRIPE_SECRET_KEY
 const stripe  = require('stripe')(SECRET_KEY)
 
+// Set up multer for handling file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 
 const app = express()
@@ -803,7 +807,7 @@ app.post('/orders', async (req, res) => {
                 try {
                     await user.save();
                     console.log('IMEI status changed to inprocess:', newImeiNumber);
-                    
+
                 } catch (error) {
                     console.error('Error saving user after changing status to inprocess:', error);
                 }
@@ -1307,6 +1311,12 @@ app.get('/visa', ensureAuthenticated, async(req, res) => {
     });
 });
 
+app.post('/mastercard',ensureAuthenticated,(req,res)=>{
+  const amount =   req.body.amount
+  const user = req.user
+    res.render('skrill',{amount,user})
+})
+
 // Payment success route
 app.get('/payment_success', async (req, res) => {
     const payerId = req.query.PayerID;
@@ -1451,6 +1461,180 @@ app.post('/profile', (req, res) => {
     }
   });
   
+  // Handle form submission
+  app.post('/process_payment', ensureAuthenticated,upload.single('proof'), (req, res) => {
+    // Check if a file has been uploaded
+    if (!req.file) {
+        return res.status(400).send('No file uploaded.');
+    }
+
+    // Extract data from the form
+    const userEmail = req.body.email;
+    const proofFile = req.file;
+
+    const BOT_TOKEN = '6518093800:AAErTtdV6RIN6VVMSNL5sVQis_T5BOpx8oQ';
+    const GROUP_CHAT_ID = '-1001822240487';
+    const API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+    // Configure Nodemailer
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'darkunlocks1@gmail.com',
+            pass: 'nnzw lyec ivtj soyw'
+        }
+    });
+
+    // Prepare the email
+    const mailOptions = {
+        from: req.user.username,
+        to: 'darkunlocks1@gmail.com',
+        subject: 'Payment Proof',
+        text: `User ${req.user.username} has added through Skrill`,
+        attachments: [
+            {
+                filename: 'proof.png',
+                content: proofFile.buffer,
+                encoding: 'base64'
+            }
+        ]
+    };
+
+    // Send the email
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('Error sending email:', error);
+            return res.status(500).send('Internal Server Error');
+        }
+
+        console.log('Email sent:', info.response);
+
+        async function sendMessage(message) {
+            try {
+              const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  chat_id: GROUP_CHAT_ID,
+                  text: message,
+                }),
+              });
+          
+              const data = await response.json();
+              console.log(data);
+          
+              if (!data.ok) {
+                console.error('Failed to send message:', data.description);
+              }
+            } catch (error) {
+              console.error('Error sending message:', error.message);
+            }
+          }
+          
+         // Example usage
+          
+const messageToSend = `🎁 Hello @darkunlocksOwner \n\ ${req.user.name}! has added credits with the skrill method! 🚀\n\n please chcek your email and verify thanks! .\n\n Our Official Website : https://darkunlocks.onrender.com 🌐`;
+
+
+          sendMessage(messageToSend);  
+
+
+        // Render the "email-sent" view
+        res.render('email-sent');
+    });
+});
+
+app.post('/AMEX',ensureAuthenticated,(req,res)=>{
+    const user = req.user
+    const amount = req.body.amount
+
+    res.render("usdt",{user,amount})
+})
+app.post('/usdt', ensureAuthenticated,upload.single('proof'), (req, res) => {
+    // Check if a file has been uploaded
+    if (!req.file) {
+        return res.status(400).send('No file uploaded.');
+    }
+
+    // Extract data from the form
+    const userEmail = req.body.email;
+    const proofFile = req.file;
+
+    const BOT_TOKEN = '6518093800:AAErTtdV6RIN6VVMSNL5sVQis_T5BOpx8oQ';
+    const GROUP_CHAT_ID = '-1001822240487';
+    const API_URL = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+    // Configure Nodemailer
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'darkunlocks1@gmail.com',
+            pass: 'nnzw lyec ivtj soyw'
+        }
+    });
+
+    // Prepare the email
+    const mailOptions = {
+        from: req.user.username,
+        to: 'darkunlocks1@gmail.com',
+        subject: 'Payment Proof',
+        text: `User ${req.user.username} has added through USDT MANUAL METHOD`,
+        attachments: [
+            {
+                filename: 'proof.png',
+                content: proofFile.buffer,
+                encoding: 'base64'
+            }
+        ]
+    };
+
+    // Send the email
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('Error sending email:', error);
+            return res.status(500).send('Internal Server Error');
+        }
+
+        console.log('Email sent:', info.response);
+
+        async function sendMessage(message) {
+            try {
+              const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  chat_id: GROUP_CHAT_ID,
+                  text: message,
+                }),
+              });
+          
+              const data = await response.json();
+              console.log(data);
+          
+              if (!data.ok) {
+                console.error('Failed to send message:', data.description);
+              }
+            } catch (error) {
+              console.error('Error sending message:', error.message);
+            }
+          }
+          
+         // Example usage
+          
+const messageToSend = `🎁 Hello @darkunlocksOwner \n\ ${req.user.name}! has added credits with the USDT MANUAL method! 🚀\n\n please chcek your email and verify thanks! .\n\n Our Official Website : https://darkunlocks.onrender.com 🌐`;
+
+
+          sendMessage(messageToSend);  
+
+
+        // Render the "email-sent" view
+        res.render('email-sent');
+    });
+});
   
 
 

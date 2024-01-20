@@ -1,0 +1,98 @@
+<%- include("partials/header-user"); -%>
+
+<!-- Include Bootstrap CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        margin: 20px;
+    }
+
+    h2 {
+        color: #333;
+        text-align: center;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+
+    form {
+        margin-top: 20px;
+        max-width: 400px;
+        margin: 0 auto; /* Center the form */
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    input[type="file"],
+    input[type="email"],
+    input[type="submit"] {
+        width: 100%;
+        padding: 5px;
+        margin-bottom: 10px;
+        box-sizing: border-box;
+    }
+
+    input[type="submit"] {
+        background-color: #4caf50;
+        color: white;
+        cursor: pointer;
+    }
+
+    input[type="submit"]:hover {
+        background-color: #45a049;
+    }
+</style>
+
+<h2>Skrill Payment Information</h2>
+
+<!-- Table displaying Skrill email address -->
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Payment Method</th>
+            <th>Email Address</th>
+            <td>Amount</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Skrill </td>
+            <td>dannykdaniel2@gmail.com</td>
+            <td>$<%= amount %></td>
+        </tr>
+    </tbody>
+</table>
+
+<br>
+
+<!-- Payment Proof Form -->
+<h2 class="text-center">Submit Proof of Payment</h2>
+<form class="mx-auto" action="/process_payment" method="post" enctype="multipart/form-data">
+    <label for="proof">Proof of Payment:</label>
+    <input type="file" id="proof" name="proof" accept="image/*" required>
+    <br>
+    <label for="email">Your Email Address:</label>
+    <input type="email" id="email" name="email" value="<%= user.username %>" disabled>
+    <br>
+    <input type="submit" class="btn btn-success" value="Submit">
+</form>
+
+<%- include("partials/footer"); -%>
